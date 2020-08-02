@@ -1,0 +1,116 @@
+---
+title: 서울시 생활인구 데이터 분석1 [데이터 수집]
+author: JDW
+date: '2020-04-13'
+slug: seoulpop1
+categories:
+  - 데이터분석
+tags:
+  - R
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/pymjs/pym.v1.js"></script>
+<script src="/rmarkdown-libs/widgetframe-binding/widgetframe.js"></script>
+
+
+<center>
+<img src="/post/2020-04-13-seoulPop1_files/seoulView.jpg" />
+</center>
+<p> 최근 개인적으로 관심있게 생각하고 있는 것중에 하나가 바로 인구에 대한 것입니다. 요즘 저출산과 고령화에 관해 여러 매스컴에서 다루는 것을 심심치 않게 보고 있습니다. 오늘날 우리 사회에 있어서 큰 이슈중에 하나인데요. 우연히 서울시의 생활인구 데이터를 접하게 되어 이를 분석해 보았습니다.</p>
+<div id="데이터-수집" class="section level2">
+<h2>데이터 수집</h2>
+<p> 이번에 분석한 데이터는 서울시 열린데이터 광장에서 제공하는 서울시 주민등록인구(구별) 통계 데이터 입니다. 주민등록인구수를 자치구별로 제공한 통계 데이터라고 하는데요. 이를 통해 간단한 통계분석 및 그래프 시각화를 진행해 보겠습니다.</p>
+<center>
+<img src="/post/2020-04-13-seoulPop1_files/seoulsite1.png" />
+</center>
+<p> 데이터는 Open API를 통해 가져올 예정입니다. api 호출을 위해서는 인증키가 필요한데요. 홈페이지에서 회원가입과 인증키 발급 신청을 하시면 어렵지 않게 발급하실 수 있습니다.</p>
+<center>
+<img src="/post/2020-04-13-seoulPop1_files/K-002.png" />
+</center>
+<center>
+<img src="/post/2020-04-13-seoulPop1_files/K-003.png" />
+</center>
+<center>
+<img src="/post/2020-04-13-seoulPop1_files/K-001.png" />
+</center>
+<p>  인증키를 발급하고 데이터 수집을 위한 (api 호출을 위한) 절차를 진행합니다. open API 제공하는 여러 사이트들처럼 서울시 열린데이터 광장 사이트 역시 api를 사용하는 방법이 적혀있는 명세서를 제공하는데요. 본격적인 수집전에 명세서를 통해 데이터의 특징과 요청변수에 관해 숙지합니다.</p>
+<center>
+<img src="/post/2020-04-13-seoulPop1_files/K-004.png" />
+</center>
+<center>
+<img src="/post/2020-04-13-seoulPop1_files/K-005.png" />
+</center>
+<p>  명세서는 일종의 사용설명서라고 생각하시면 될 것 같습니다. 데이터에 대한 개괄적인 정보부터 시작해서 요청 방법, 에러메세지 등에 관한 내용이 기재되어 있습니다. 명세서에 적혀있는 인자들과 샘플URL을 토대로 api를 호출하는 주소를 만들어 이를 R로 불러들이는 함수를 만들어 보겠습니다.</p>
+<pre class="r"><code>librarys &lt;- function(){
+    library(dplyr)
+    library(stringr)
+    library(XML)
+    library(xml2)
+}
+librarys()
+
+# api 호출 함수
+seoul_livingpop &lt;- function(start, end){
+    Rurl &lt;- str_glue(
+        &#39;http://openapi.seoul.go.kr:8088/{auth_code}/xml/octastatapi419/{start}/{end}/&#39;
+    )
+    raw.data &lt;- xmlTreeParse(Rurl, useInternalNodes = T, encoding = &#39;UTF-8&#39;)
+    return(raw.data)
+}
+
+auth_code &lt;- &#39;발급받은 인증코드를 여기에 넣으시면 됩니다.&#39;
+
+t1 &lt;- seoul_livingpop(1,1000) %&gt;% xmlRoot() %&gt;% getNodeSet(., &quot;row&quot;) %&gt;% xmlToDataFrame() 
+t2 &lt;- seoul_livingpop(1001,2000) %&gt;% xmlRoot() %&gt;% getNodeSet(., &quot;row&quot;) %&gt;% xmlToDataFrame() 
+seouldata &lt;- rbind(t1, t2)</code></pre>
+<p> <strong><code>stringr</code></strong> 패키지의 <code>str_glue()</code>함수는 URL같은 문자열을 만드는데 유용하게 쓸 수 있습니다. 특정 변수의 값을 문자열에 넣고자 할때 보통 <code>paste0()</code>함수를 쓰곤 했었는데요. 사용하는데 큰 불편함은 없었지만 paste를 사용해 만든 URL은 지저분하고 직관적으로 눈에 안보이는 단점이 있었습니다. 하지만 <code>str_glue()</code>는 문자열에 변수를 붙여넣을 수 있어서 훨신 더 직관적인 URL을 만들 수 있습니다.</p>
+<p> 만들어진 URL을 <code>xmlTreeParse()</code> 함수를 통해 불러들였고, 불러들인 값을 반환하는 함수인 <code>seoul_livingpop()</code>을 만들었습니다.</p>
+<p> 데이터의 호출은 한번에 1000건을 넘길 수 없다고 하여 두번에 걸쳐서 호출 하였습니다.(<code>t1</code>, <code>t2</code>객체) 그리고 이를 파싱하여 데이터프래임화를 진행하였으며(<code>xmlToDataFrame()</code>), 그렇게 만들어진 두개의 데이터프레임을 <code>rbind()</code>함수를 통해 <code>seouldata</code>라는 하나의 객체에 담았습니다.</p>
+<pre class="r"><code>glimpse(seouldata)</code></pre>
+<pre><code>## Rows: 1,014
+## Columns: 14
+## $ GIGAN                 &lt;fct&gt; &lt;U+FEFF&gt;2010.1-4, 2010.1-4, 2010.1-4, 2010.1-...
+## $ JACHIGU               &lt;fct&gt; 합계, 종로구, 중구, 용산구, 성동구, 광진구, 동대문구, 중랑구, 성북구, 강...
+## $ SEDAE                 &lt;fct&gt; &quot;4,121,193&quot;, &quot;74,300&quot;, &quot;58,472&quot;, &quot;107,407&quot;, &quot;...
+## $ GYE_1                 &lt;fct&gt; &quot;10,464,171&quot;, &quot;177,023&quot;, &quot;138,102&quot;, &quot;250,844&quot;...
+## $ NAMJA_1               &lt;fct&gt; &quot;5,181,117&quot;, &quot;88,225&quot;, &quot;69,175&quot;, &quot;123,295&quot;, &quot;...
+## $ YEOJA_1               &lt;fct&gt; &quot;5,283,054&quot;, &quot;88,798&quot;, &quot;68,927&quot;, &quot;127,549&quot;, &quot;...
+## $ GYE_2                 &lt;fct&gt; &quot;10,208,670&quot;, &quot;168,158&quot;, &quot;129,786&quot;, &quot;238,366&quot;...
+## $ NAMJA_2               &lt;fct&gt; &quot;5,059,504&quot;, &quot;84,088&quot;, &quot;65,216&quot;, &quot;116,764&quot;, &quot;...
+## $ YEOJA_2               &lt;fct&gt; &quot;5,149,166&quot;, &quot;84,070&quot;, &quot;64,570&quot;, &quot;121,602&quot;, &quot;...
+## $ GYE_3                 &lt;fct&gt; &quot;255,501&quot;, &quot;8,865&quot;, &quot;8,316&quot;, &quot;12,478&quot;, &quot;7,969...
+## $ NAMJA_3               &lt;fct&gt; &quot;121,613&quot;, &quot;4,137&quot;, &quot;3,959&quot;, &quot;6,531&quot;, &quot;3,839&quot;...
+## $ YEOJA_3               &lt;fct&gt; &quot;133,888&quot;, &quot;4,728&quot;, &quot;4,357&quot;, &quot;5,947&quot;, &quot;4,130&quot;...
+## $ SEDAEDANGINGU         &lt;fct&gt; 2.48, 2.26, 2.22, 2.22, 2.43, 2.39, 2.36, 2.4...
+## $ N_65SEISANGGORYEONGJA &lt;fct&gt; &quot;956,414&quot;, &quot;20,925&quot;, &quot;16,208&quot;, &quot;28,436&quot;, &quot;30,...</code></pre>
+<pre class="r"><code>summary(seouldata)</code></pre>
+<pre><code>##       GIGAN        JACHIGU        SEDAE             GYE_1         NAMJA_1    
+##  2010.2-4: 26   강남구 : 39   126,714:   2   10,025,927:   1   184,750:   2  
+##  2010.3-4: 26   강동구 : 39   135,563:   2   10,041,574:   1   214,105:   2  
+##  2010.4-4: 26   강북구 : 39   137,509:   2   10,049,607:   1   228,201:   2  
+##  2011.1-4: 26   강서구 : 39   137,901:   2   10,054,979:   1   292,646:   2  
+##  2011.2-4: 26   관악구 : 39   140,007:   2   10,068,381:   1   66,582 :   2  
+##  2011.3-4: 26   광진구 : 39   141,246:   2   10,089,517:   1   118,830:   1  
+##  (Other) :858   (Other):780   (Other):1002   (Other)   :1008   (Other):1003  
+##     YEOJA_1            GYE_2         NAMJA_2        YEOJA_2         GYE_3    
+##  191,496:   2   424,892   :   2   151,961:   2   250,708:   2   4,445  :  3  
+##  206,355:   2   10,009,588:   1   184,103:   2   114,449:   1   4,476  :  3  
+##  122,877:   1   10,022,181:   1   210,440:   2   114,733:   1   4,621  :  3  
+##  123,140:   1   10,055,027:   1   214,026:   2   114,978:   1   5,013  :  3  
+##  123,553:   1   10,078,850:   1   214,094:   2   115,002:   1   7,799  :  3  
+##  123,623:   1   10,100,987:   1   214,471:   2   115,068:   1   1,972  :  2  
+##  (Other):1006   (Other)   :1007   (Other):1002   (Other):1007   (Other):997  
+##     NAMJA_3       YEOJA_3    SEDAEDANGINGU N_65SEISANGGORYEONGJA
+##  3,692  :  4   2,103  :  3   2.43   : 38   32,279 :   2         
+##  1,757  :  3   2,221  :  3   2.44   : 34   35,299 :   2         
+##  1,868  :  3   2,690  :  3   2.31   : 28   36,727 :   2         
+##  1,889  :  3   2,788  :  3   2.3    : 27   43,507 :   2         
+##  2,030  :  3   2,870  :  3   2.35   : 27   48,175 :   2         
+##  4,094  :  3   3,022  :  3   2.42   : 27   49,935 :   2         
+##  (Other):995   (Other):996   (Other):833   (Other):1002</code></pre>
+<pre class="r"><code>frameWidget(DT::datatable(head(seouldata)))</code></pre>
+<div id="htmlwidget-1" style="width:100%;height:480px;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"url":"/post/2020-04-13-seoulPop1_files/figure-html//widgets/widget_unnamed-chunk-4.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+<p> 수집된 데이터를 살펴보니 숫자형 데이터에 콤마도 적혀있고, 지역구와 합계가 같이 있어 바로 분석하기엔 무리가 있어 보입니다. 다음장에서 데이터 전처리에 관한 전반적인 작업을 진행해 보겠습니다.</p>
+</div>

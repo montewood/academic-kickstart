@@ -1,0 +1,10 @@
+== 잊기 쉬운 정보들 ==
+
+ * 전반적인 theme의 수정은 ./data/themes/my_theme.toml에서 세팅 가능하다.
+ * 세부 CSS 수정 경로는 ./public/css/academic.css 이다. 
+ * CSS modifing을 한 경우의 CSS의 수정은 ./assets/scss/custom.scss 파일을 통해 가능하다.
+ * 본문 width 조절 : "article-container"
+
+ * 블로그 좌 상단 메뉴의 설정: ./config/_default/menus.toml 파일로 설정.
+
+ * 사용자 폰트 설정 : /data/fonts/my_font_set.toml

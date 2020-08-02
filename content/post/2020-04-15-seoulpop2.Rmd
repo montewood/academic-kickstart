@@ -1,0 +1,236 @@
+---
+title: 서울시 생활인구 데이터 분석2 [데이터 전처리]
+author: JDW
+date: '2020-04-15'
+slug: seoulpop2
+categories:
+  - 데이터분석
+tags:
+  - R
+---
+```{r, message=FALSE, include=FALSE}
+
+library(jsonlite)
+library(dplyr)
+library(stringr)
+library(XML)
+library(xml2)
+library(lubridate)
+library(zoo)
+library(ggplot2)
+library(showtext)
+
+# seouldata <- readRDS('C:/Users/JDW/OneDrive - aggregate distributed infrastructures/r_programming/PROJECT/pop/seoul_footTrafic.rds')
+# sum_seouldata <- seouldata %>% filter(JACHIGU == '합계')
+# seouldata <- seouldata %>% filter(JACHIGU != '합계')
+seouldata <- readRDS('C:/Users/JDW/Desktop/git/file_source/seoul_footTraffic/seouldata2.rds')
+
+```
+
+![](/post/2020-04-15-seoulpop2_files/blue-4119805_1920.jpg)
+
+
+&nbsp; 이번장에서는 데이터 전처리 과정을 진행해 보겠습니다. 앞서 수집한 데이터는 숫자임에도 불구하고 값에 콤마가 붙어있고, 데이터의 형태도 factor형으로 되어 있었습니다. 분석에 적합하지 않은 형태이죠. 전처리를 통해 분석에 적합한 숫자형으로 변환시켜 줄 필요가 있습니다. 
+<br>
+
+# 데이터 전처리
+___
+
+## 데이터 구조 파악 
+&nbsp; 이전장에서 호출했었던 데이터의 형태를 다시 한번 확인해 보겠습니다. 
+```{r}
+head(seouldata)
+tail(seouldata)
+glimpse(seouldata)
+summary(seouldata)
+```
+<br>
+
+## GIGAN Column
+&nbsp; `seouldata$GIGAN`은 데이터의 연도와 분기를 의미하는 열입니다. 살펴보니 첫번째 행의 값이 특이한 문자가 섞여있네요. 해당 문자는 바이트 순서 표식(Byte Order Mark)라고 해서 텍스트 시작 지점에 등장하는 특수한 문자입니다. 문자열을 자르는 함수인 `str_sub()`을 통해 제거해줍니다. 
+```{r}
+head(seouldata)
+as.character(seouldata$GIGAN[1])
+seouldata$GIGAN[1] <- str_sub(seouldata$GIGAN[1], 1, 8)
+as.character(seouldata$GIGAN[1])
+```
+<br>
+
+&nbsp; GIGAN 컬럼의 값을 보니 뒤에 분기를 의미하는 "-4"라는 문자가 반복되는 것을 볼 수 있습니다. `"연도.분기-4"` 형식으로 구성되어 있는 GIGAN컬럼에서 "-4"를 제거하여 `"연도-분기"`의 형태로 변환 해줍니다. 
+
+```{r}
+seouldata$GIGAN <- seouldata$GIGAN %>% str_sub(1, 6) %>% str_replace(., '\\.', '-')
+seouldata$GIGAN <- seouldata$GIGAN %>% as.factor()
+seouldata$GIGAN %>% head()
+```
+<br>
+
+## 숫자형 변수 콤마 제거
+&nbsp; `seouldata`는 서울시에 거주하고 있는 인구에 대한 데이터 입니다. 세대수와 남성인구 여성인구 고령인구 등의 인구수를 나타내는 데이터이지만 데이터에는 콤마가 붙여져 있기 때문에 이를 제거해야 원활한 분석을 진행 할 수 있겠습니다. 더불어 콤마가 붙여있는 팩터형 데이터를 이번 전처리를 통해 콤마가 없는 숫자형 데이터로 일괄 변환하겠습니다. 
+
+```{r}
+head(seouldata) # 3열부터 14열까지의 전처리 필요
+# 콤마 제거
+seouldata <- seouldata %>% apply(., 2, function(x){str_remove_all(x, ',')}) %>% as.data.frame()
+head(seouldata)
+```
+
+&nbsp; `apply()` 함수를 통해 `seouldata`객체의 각 열에 일괄적으로 `str_remove_all()`함수를 적용시켜 콤마를 제거해 주었습니다. `apply()`함수를 적용하면 결과값이 `matrix`형태로 변환되므로 `as.data.frame()`함수를 통해 다시 데이터프레임화 시켜줍니다. 
+<br>
+
+```{r}
+# 숫자형으로 변환
+t1 <- sapply(seq(3, 14), function(x){seouldata[,x] = as.character(seouldata[,x]) %>% as.numeric}) %>% 
+    as.data.frame() 
+seouldata[ ,c(3:14)] <- t1
+head(seouldata)
+glimpse(seouldata)
+```
+
+&nbsp; 숫자를 제거한 열들은 기본적으로 문자형의 형태로 저장되어 있습니다. 이를 다시 숫자형으로 변환시켜줄 작업을 진행하였습니다. 
+&nbsp; `apply` 계열 함수중의 하나인 `sapply`함수는 인자값을 받아 각각에 적용시켜 이를 벡터의 형태로 반환시켜주는 함수입니다. `sapply(인자, 함수)`의 형태인데요. 여기에서는 `seq(3, 14)`를 인자값으로 넣어 자체 함수인 `seouldata[,x] = as.character(seouldata[,x]) %>% as.numeric()`에 적용시킨 것입니다. apply 함수에 익숙치 않으신 분들은 약간 이해하기 난해할 수 있는데요. 코드를 다시 풀어서 보자면 `seq(3,14)`는 3부터 14까지 순차적으로 증가하는 숫자를 반환하는 함수인데, 이 값들은 각각 순서대로 sapply함수 내부에 있는 `function(x)`의 매개변수로 순차적으로 들어가게 됩니다. 맨 먼저 x에 3이 들어가서 `t1[,3] <- seouldata[,3] = as.character(seouldata[,3]) %>% as.numeric` 작업을 진행하고, 작업이 끝나게 되면 x에 4가 들어가서 `t1[,4] <- seouldata[,4] = as.character(seouldata[,4]) %>% as.numeric` 작업을 진행합니다. 이렇게 순차적으로 14까지의 작업을 진행하는 방식이라고 이해하시면 될 것같습니다. 이를 통해 `t1` 객체에는 `seouldata[, c(3:14)]`의 값이 숫자형으로 변환된 값들이 저장됩니다.
+
+&nbsp; 역시나 `apply()` 계열의 함수이므로 이전 과정처럼 결과값이 `matrix`형태로 반환됩니다. 이를 다시 `as.data.frame()`함수를 통해 데이터 프레임화 시켜줍니다. 
+
+&nbsp; 전처리한 `t1` 데이터를 전처리 되기 이전인 `seouldata[, c(3:14)]`에 덮어 써 줍니다. 이로써 기존 문자열로 구성되있던 숫자데이터를 제거하고 새로이 숫자형 데이터로 대체하였습니다. 
+<br>
+<br>
+
+## 연도, 분기 변수 생성 
+&nbsp; 연도별, 분기별 인구수의 변화를 분석하기 위해, `GIGAN`변수를 활용하여 연도를 의미하는 `year`변수열과 분기를 의미하는 `qrt` 변수열을 생성해 줍니다. 
+```{r}
+# year, qrt 변수 생성
+seouldata <- seouldata %>% mutate(year = str_sub(GIGAN, 1, 4) %>% as.factor(),
+                                  qrt = str_sub(GIGAN, 6) %>% as.factor())
+head(seouldata)
+glimpse(seouldata)
+```
+<br>
+
+## 합계인구 분리 
+&nbsp; `seouldata$JACHIGU`는 서울의 자치구역을 구분하는 변수열 입니다. 변수값으로 서울의 자치구역이 적혀있는데요. 서울 자치구역의 인구수를 합산한 행인 "합계"도 포함되어 있습니다. 각 자치구별 분석에 합계가 포함되어 있으면 안되므로 이를 나누어 다루도록 하겠습니다. 
+```{r}
+# 자치구, 합계 분리
+table(seouldata$JACHIGU) # 자치구에 "합계"가 같이 포함되어 있음. 
+sum_seouldata <- seouldata %>% filter(JACHIGU == '합계')
+seouldata <- seouldata %>% filter(JACHIGU != '합계')
+summary(seouldata)
+summary(sum_seouldata)
+```
+<br> 
+```{r, eval = F}
+save_RDS(sum_seouldata, './sum_seouldata.rds')
+save_RDS(seouldata, './seouldata.rds')
+```
+<br>
+
+&nbsp; **`dplyr`** 패키지의 `filter()`함수를 사용하여 서울 자치구 합산 인구수 데이터인 `sum_seouldata`와 각 자치구별 인구수 데이터인 `seouldata`객체를 분리하였고, 이를 각각 R의 고유한 파일 형식인 Rds 파일로 저장하였습니다. 분석에 필요한 전처리는 이것으로 마무리짓고 다음장에서 분석과 시각화작업을 진행하도록 하겠습니다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

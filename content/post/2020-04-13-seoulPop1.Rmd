@@ -1,0 +1,114 @@
+---
+title: 서울시 생활인구 데이터 분석1 [데이터 수집]
+author: JDW
+date: '2020-04-13'
+slug: seoulpop1
+categories:
+  - 데이터분석
+tags:
+  - R
+---
+```{r, message=FALSE, include=FALSE}
+
+library(jsonlite)
+library(dplyr)
+library(stringr)
+library(XML)
+library(xml2)
+library(lubridate)
+library(zoo)
+library(ggplot2)
+library(showtext)
+library(widgetframe)
+
+# seouldata <- readRDS('C:/Users/JDW/OneDrive - aggregate distributed infrastructures/r_programming/PROJECT/pop/seoul_footTrafic.rds')
+# sum_seouldata <- seouldata %>% filter(JACHIGU == '합계')
+# seouldata <- seouldata %>% filter(JACHIGU != '합계')
+seouldata <- readRDS('C:/Users/JDW/Desktop/git/file_source/seoul_footTraffic/seouldata2.rds')
+
+```
+
+<center>
+![](/post/2020-04-13-seoulPop1_files/seoulView.jpg)
+</center>
+
+&nbsp;최근 개인적으로 관심있게 생각하고 있는 것중에 하나가 바로 인구에 대한 것입니다. 요즘 저출산과 고령화에 관해 여러 매스컴에서 다루는 것을 심심치 않게 보고 있습니다. 오늘날 우리 사회에 있어서 큰 이슈중에 하나인데요. 우연히 서울시의 생활인구 데이터를 접하게 되어 이를 분석해 보았습니다. 
+
+## 데이터 수집
+
+&nbsp;이번에 분석한 데이터는 서울시 열린데이터 광장에서 제공하는 서울시 주민등록인구(구별) 통계 데이터 입니다. 주민등록인구수를 자치구별로 제공한 통계 데이터라고 하는데요. 이를 통해 간단한 통계분석 및 그래프 시각화를 진행해 보겠습니다. 
+
+<center>
+![](/post/2020-04-13-seoulPop1_files/seoulsite1.png)
+</center>
+
+&nbsp;데이터는 Open API를 통해 가져올 예정입니다. api 호출을 위해서는 인증키가 필요한데요. 홈페이지에서 회원가입과 인증키 발급 신청을 하시면 어렵지 않게 발급하실 수 있습니다. 
+
+<center>
+![](/post/2020-04-13-seoulPop1_files/K-002.png)
+</center>
+
+<center>
+![](/post/2020-04-13-seoulPop1_files/K-003.png)
+</center>
+
+<center>
+![](/post/2020-04-13-seoulPop1_files/K-001.png)
+</center>
+
+&nbsp; 인증키를 발급하고 데이터 수집을 위한 (api 호출을 위한) 절차를 진행합니다. open API 제공하는 여러 사이트들처럼 서울시 열린데이터 광장 사이트 역시 api를 사용하는 방법이 적혀있는 명세서를 제공하는데요. 본격적인 수집전에 명세서를 통해 데이터의 특징과 요청변수에 관해 숙지합니다. 
+
+<center>
+![](/post/2020-04-13-seoulPop1_files/K-004.png)
+</center>
+
+<center>
+![](/post/2020-04-13-seoulPop1_files/K-005.png)
+</center>
+
+&nbsp; 명세서는 일종의 사용설명서라고 생각하시면 될 것 같습니다. 데이터에 대한 개괄적인 정보부터 시작해서 요청 방법, 에러메세지 등에 관한 내용이 기재되어 있습니다. 명세서에 적혀있는 인자들과 샘플URL을 토대로 api를 호출하는 주소를 만들어 이를 R로 불러들이는 함수를 만들어 보겠습니다. 
+
+```{r, message=F, warning=F, eval = F}
+
+librarys <- function(){
+    library(dplyr)
+    library(stringr)
+    library(XML)
+    library(xml2)
+}
+librarys()
+
+# api 호출 함수
+seoul_livingpop <- function(start, end){
+    Rurl <- str_glue(
+        'http://openapi.seoul.go.kr:8088/{auth_code}/xml/octastatapi419/{start}/{end}/'
+    )
+    raw.data <- xmlTreeParse(Rurl, useInternalNodes = T, encoding = 'UTF-8')
+    return(raw.data)
+}
+
+auth_code <- '발급받은 인증코드를 여기에 넣으시면 됩니다.'
+
+t1 <- seoul_livingpop(1,1000) %>% xmlRoot() %>% getNodeSet(., "row") %>% xmlToDataFrame() 
+t2 <- seoul_livingpop(1001,2000) %>% xmlRoot() %>% getNodeSet(., "row") %>% xmlToDataFrame() 
+seouldata <- rbind(t1, t2)
+```
+
+&nbsp;**`stringr`** 패키지의 `str_glue()`함수는 URL같은 문자열을 만드는데 유용하게 쓸 수 있습니다. 특정 변수의 값을 문자열에 넣고자 할때 보통 `paste0()`함수를 쓰곤 했었는데요. 사용하는데 큰 불편함은 없었지만  paste를 사용해 만든 URL은 지저분하고 직관적으로 눈에 안보이는 단점이 있었습니다. 하지만 `str_glue()`는 문자열에 변수를 붙여넣을 수 있어서 훨신 더 직관적인 URL을 만들 수 있습니다.  
+
+&nbsp;만들어진 URL을 `xmlTreeParse()` 함수를 통해 불러들였고, 불러들인 값을 반환하는 함수인 `seoul_livingpop()`을 만들었습니다. 
+
+&nbsp;데이터의 호출은 한번에 1000건을 넘길 수 없다고 하여 두번에 걸쳐서 호출 하였습니다.(`t1`, `t2`객체) 그리고 이를 파싱하여 데이터프래임화를 진행하였으며(`xmlToDataFrame()`), 그렇게 만들어진 두개의 데이터프레임을 `rbind()`함수를 통해 `seouldata`라는 하나의 객체에 담았습니다.  
+
+```{r, message=F, warning=F}
+glimpse(seouldata)
+summary(seouldata)
+```
+```{r, message=F, warning=F}
+frameWidget(DT::datatable(head(seouldata)))
+```
+
+
+&nbsp;수집된 데이터를 살펴보니 숫자형 데이터에 콤마도 적혀있고, 지역구와 합계가 같이 있어 바로 분석하기엔 무리가 있어 보입니다. 다음장에서 데이터 전처리에 관한 전반적인 작업을 진행해 보겠습니다. 
+
+

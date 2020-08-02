@@ -1,0 +1,212 @@
+---
+title: 텍스트 분석을 통한 프로듀스X101 데뷔조 예측 2 [데이터 전처리]
+author: JDW
+date: '2019-12-15'
+slug: 
+categories:
+  - 데이터분석
+tags:
+  - R
+---
+
+
+
+<div id="데이터-전처리" class="section level1">
+<h1>데이터 전처리</h1>
+<p>이번 파트는 데이터 전처리 과정을 다룹니다.
+<br>
+<br>
+크롤링한 데이터들은 사용하기 위해서는 적합한 형태로 변환을 해야 하는 과정이 필요합니다. 크롤링한 데이터를 그대로 사용하는 경우는 극히 드물다고 할 수 있습니다.
+<br>
+<br>
+데이터 분석의 과정을 요리에 비유하는 분들이 많이 계시는데요. 크롤링과 같은 수단을 통해서 데이터를 확보하는 과정을 재료 확보라고 생각을 해 보자면 데이터를 정제하고 전처리하는 과정을 요리에선 재료를 다듬고 손질하는 과정으로 생각할 수 있습니다. 마트에서 사온 채소나 고기등을 손질하지 않고서 그대로 요리할순 없듯이 우리가 확보한 데이터를 전처리 하지 않고서 분석을 하는것은 극히 드물다고 할 수 있습니다.
+<br></p>
+<p><br>
+파일들을 R로 불러들이겠습니다.</p>
+<pre class="r"><code># ---- 패키지 호출 ----
+
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(stringr)
+library(gtools)
+
+# ---- for문을 활용한 데이터 불러오기 및 취합 ----
+
+dir &lt;- &#39;C:/Users/JDW/Desktop/my_cloud/OneDrive/R/producex/data&#39;
+filelist &lt;- list.files(dir)
+filelist &lt;- mixedsort(filelist, decreasing = T)
+pxdata &lt;- data.frame()
+temp &lt;- NULL
+
+for(file in filelist){
+    if(str_sub(file, -3, -1) == &#39;csv&#39;){
+        temp &lt;- fread(paste(dir, file, sep = &#39;/&#39;), header = T, stringsAsFactors = F)
+        temp &lt;- temp %&gt;% select(p_title, p_time)
+        pxdata &lt;- rbind(pxdata, temp)
+        
+        rm(temp)
+    }else{
+        next
+    }
+
+}</code></pre>
+<p><br></p>
+<p>코드의 해석은 다음과 같습니다. 먼저 데이터가 들어있는 폴더의 경로를 <code>dir</code> 객체에 담아 둡니다. <br>
+다음으로 r의 내장함수인 <code>list.files()</code> 함수를 이용하여 폴더에 들어있는 파일들을 파악하고, 이를 <code>filelist</code>라는 이름의 객체에 담았습니다.<br>
+<code>gtools::mixedsort()</code> 함수는 r의 기본 <code>sort()</code>함수가 처리하지 못하는 문자열형태의 숫자를 할 때에 사용되는 함수입니다.
+<code>list.files(dir)</code>로 불러들인 <code>filelist</code> 가 문자열이기 때문에 인간이 상식적으로 생각하는 형태로 정렬을 하지 못합니다. 간단한 예를 들어 설명해 보겠습니다.
+<br>
+<br>
+<br></p>
+<hr />
+<div id="mixedsort-함수" class="section level2">
+<h2>mixedsort() 함수</h2>
+<p><br></p>
+<pre class="r"><code>t1 &lt;- c(1:20) %&gt;% as.character()
+t2 &lt;- c(1:20) %&gt;% as.numeric()</code></pre>
+<pre class="r"><code>str(t1)</code></pre>
+<pre><code>##  chr [1:20] &quot;1&quot; &quot;2&quot; &quot;3&quot; &quot;4&quot; &quot;5&quot; &quot;6&quot; &quot;7&quot; &quot;8&quot; &quot;9&quot; &quot;10&quot; &quot;11&quot; &quot;12&quot; &quot;13&quot; &quot;14&quot; ...</code></pre>
+<pre class="r"><code>str(t2)</code></pre>
+<pre><code>##  num [1:20] 1 2 3 4 5 6 7 8 9 10 ...</code></pre>
+<p><br>
+<code>t1</code>객체와 <code>t2</code> 객체는 각각 1~20 까지의 데이터가 들어가 있는데요. <code>t1</code>은 문자열로 이루어져 있고, <code>t2</code>는 숫자로 구성되어 있습니다.
+<br>
+<br>
+한번 내장함수인 <code>sort()</code> 사용하여 동일한 결과가 나오는지 비교해 보겠습니다.
+<br>
+<br></p>
+<pre class="r"><code>sort(t1)</code></pre>
+<pre><code>##  [1] &quot;1&quot;  &quot;10&quot; &quot;11&quot; &quot;12&quot; &quot;13&quot; &quot;14&quot; &quot;15&quot; &quot;16&quot; &quot;17&quot; &quot;18&quot; &quot;19&quot; &quot;2&quot;  &quot;20&quot; &quot;3&quot;  &quot;4&quot; 
+## [16] &quot;5&quot;  &quot;6&quot;  &quot;7&quot;  &quot;8&quot;  &quot;9&quot;</code></pre>
+<pre class="r"><code>sort(t2)</code></pre>
+<pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20</code></pre>
+<p><br>
+숫자형으로 되어있는 <code>t2</code> 객체는 정상적으로 정렬이 된 반면 문자형의 <code>t1</code> 은 1 10 11 … 형태처럼 정렬이 안되었네요. <br>
+이번에는 <code>gtools::mixedsort()</code> 함수를 사용해 보겠습니다.
+<br>
+<br></p>
+<pre class="r"><code>library(gtools)
+
+mixedsort(t1)</code></pre>
+<pre><code>##  [1] &quot;1&quot;  &quot;2&quot;  &quot;3&quot;  &quot;4&quot;  &quot;5&quot;  &quot;6&quot;  &quot;7&quot;  &quot;8&quot;  &quot;9&quot;  &quot;10&quot; &quot;11&quot; &quot;12&quot; &quot;13&quot; &quot;14&quot; &quot;15&quot;
+## [16] &quot;16&quot; &quot;17&quot; &quot;18&quot; &quot;19&quot; &quot;20&quot;</code></pre>
+<pre class="r"><code>mixedsort(t2)</code></pre>
+<pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20</code></pre>
+<p><br>
+숫자형인 <code>t2</code>는 이전처럼 정렬이 되었군요. 문자형인 <code>t1</code>은 이번엔 제대로 정렬된 것을 확인할 수 있습니다. <br>
+숫자로 되어진 문자열의 정렬을 위해서 종종 <code>mixedsort()</code> 함수를 사용하곤 합니다.</p>
+<p><br></p>
+<hr />
+</div>
+<div id="변수열-생성" class="section level2">
+<h2>변수열 생성</h2>
+<p><br></p>
+<p>데이터 분석에 사용할 변수는 게시물 제목에 해당하는 <code>p_title</code> 변수와, 게시물 작성 시간에 해당하는 <code>p_time</code> 입니다.
+<br></p>
+<p>연습생들의 언급량이 에피소드별로 (1주간격으로) 어떻게-얼마나 변화했는지를 파악하는것이 본 데이터분석의 궁극적인 목적이기 때문에 분석에 대상이 되는 텍스트와 시간 변수를 제외한 나머지 데이터들은 제외해 주겠습니다.
+<br></p>
+<pre class="r"><code>pxdata &lt;- pxdata %&gt;% select(p_title, p_time)</code></pre>
+<p><br>
+그런다음 글 작성 시간을 의미하는 <code>p_time</code> 열을 사용하여 ‘년월일’, ‘요일’ 변수열을 생성해 주겠습니다.
+<br></p>
+<pre class="r"><code>pxdata &lt;- pxdata %&gt;% mutate(p_ymd = as.Date(p_time), 
+                            p_wday = lubridate::wday(as.Date(p_time), label = T),
+                            )</code></pre>
+<p><br>
+에피소드별로 연습생들의 언급량이 어떻게 변화하였는지를 파악하기 위해서는 데이터를 에피소드별로 구분할 필요가 있습니다. 방송은 매주 금요일 밤 11시에 시작하여 그 다음날 토요일 오전 12시30분즈음 끝마쳤는데요. 그렇기에 토요일을 시작으로 금요일까지의 데이터를 에피소드의 영향력 구간이라고 설정하고, 데이터를 구분지었습니다. <br></p>
+<p>05월31일은 프로듀스X101 5화가 방영된 날이였기 때문에 수집을 시작한 06월01일을 에피소드 5화(<code>p_weeknum</code> = 5)로 설정하고 데이터를 순차적으로 구분지었네요.</p>
+<pre class="r"><code>pxdata$p_weeknum &lt;- week(as.Date(pxdata$p_time) - 5) - 17 </code></pre>
+<p><br></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">p_title</th>
+<th align="left">p_time</th>
+<th align="left">p_ymd</th>
+<th align="left">p_wday</th>
+<th align="right">p_weeknum</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">비율갑 연습생이 있다?</td>
+<td align="left">2019-06-01 23:59:50</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">디모데 떨어진거 너무 아깝다</td>
+<td align="left">2019-06-01 23:59:48</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">픽 남는데 추천해 줘</td>
+<td align="left">2019-06-01 23:59:43</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">투표할때</td>
+<td align="left">2019-06-01 23:59:42</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">남자 새끼들이 병신처럼 쳐울거나</td>
+<td align="left">2019-06-01 23:59:31</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">근데 김요한은 운 하나는 존나 좋은거같아서 부럽긔</td>
+<td align="left">2019-06-01 23:59:25</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">김성현 꼰대기 1도 없고 하찮다&lt;U+270B&gt;</td>
+<td align="left">2019-06-01 23:59:05</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">캔디 롤 찍는 거냐?? 외로워도 슬퍼도 나는 안울어</td>
+<td align="left">2019-06-01 23:58:54</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">남도현 움짤 프추좀 눌러주시긔</td>
+<td align="left">2019-06-01 23:58:52</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">어제 상위권애들 왤케 거만했냐? 좆같게</td>
+<td align="left">2019-06-01 23:58:51</td>
+<td align="left">2019-06-01</td>
+<td align="left">토</td>
+<td align="right">5</td>
+</tr>
+</tbody>
+</table>
+<center>
+<em> 변수열이 생성된 데이터의 모습 </em>
+</center>
+<p><br>
+전처리 과정을 통하여 필요없는 변수열들은 제거하고, 분석에 필요한 새로운 변수열 (<code>p_ymd</code>, <code>p_wday</code>, <code>p_weeknum</code>)을 생성하였습니다. <br>
+<br>
+전처리한 데이터를 기반으로 다음장에서 본격적인 분석 및 시각화를 진행해 보도록 하겠습니다.</p>
+</div>
+</div>
