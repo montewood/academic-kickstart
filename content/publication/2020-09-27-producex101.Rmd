@@ -1,0 +1,38 @@
+---
+title: 텍스트 분석을 통한 프로듀스X101 데뷔조 예측
+author: JDW
+date: '2019-12-07'
+slug: redirect-test
+categories: []
+tags: []
+authors: []
+doi: ''
+publishDate: '2020-09-27T22:33:01+09:00'
+publication_types:
+  - '0'
+publication: ''
+publication_short: ''
+abstract: ''
+summary: ''
+featured: no
+url_pdf: ~
+url_code: ~
+url_dataset: ~
+url_poster: ~
+url_project: ~
+url_slides: ~
+url_source: ~
+url_video: ~
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+slides: ''
+---
+
+```{r, echo = FALSE, warning = FALSE}
+library(htmltools)
+HTML('<meta http-equiv="refresh" content="0; URL=\'https://montewood.github.io/ProduceX101\'" />')
+```
+
