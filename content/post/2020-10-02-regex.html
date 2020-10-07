@@ -2,7 +2,7 @@
 title: '[R] 정규표현식 활용한 텍스트 데이터 다루기' 
 author: JDW
 date: '2020-10-02'
-slug: stringr
+slug: regex
 categories: [R]
 tags: [R, 텍스트, 전처리, 정규표현식]
 subtitle: ''
@@ -24,7 +24,7 @@ projects: []
 <link href="/rmarkdown-libs/lightable/lightable.css" rel="stylesheet" />
 
 
-<p><img src="/post/2020-09-29-stringr_files/regular-expression.gif" class="center" /></p>
+<p><img src="/post/2020-10-02-regex_files/regular-expression.gif" class="center" /></p>
 <p> 문자형 데이터를 다루는데는 수 많은 기법들이 있습니다. R에서 제공하는 기본 함수들을 통해 처리하기도 하고, 텍스트처리에 특화된 패키지함수를 사용하여 원하는 처리를 하곤 하는데요. 오늘은 그 중에 텍스트데이터를 다루는데 효과적으로 사용되는 <strong>정규표현식</strong>을 사용하는 법에 대해 알아보도록 하겠습니다.</p>
 <div id="정규표현식" class="section level1">
 <h1>정규표현식</h1>
@@ -65,7 +65,7 @@ projects: []
 <h3>4. “?”</h3>
 <p>  <strong>?</strong>(물음표)는 앞에 지정된 문자가 없거나 하나가 있음을 의미합니다.</p>
 <pre class="r"><code>see(&#39;?&#39;)</code></pre>
-<pre><code>## Error in stri_locate_all_regex(string, pattern, omit_no_match = TRUE, : Syntax error in regexp pattern. (U_REGEX_RULE_SYNTAX)</code></pre>
+<pre><code>## Error in stri_locate_all_regex(string, pattern, omit_no_match = TRUE, : Syntax error in regexp pattern. (U_REGEX_RULE_SYNTAX, context=`?`)</code></pre>
 <p> 물음표를 단독으로 사용하니 에러가 발생하였습니다. 이는 물음표 조건에 맞지 않기 때문입니다. ‘ab?c’(a와 c 사이에 b가 하나 있거나 아니면 아예 없거나) 조건으로 설정해보겠습니다.</p>
 <pre class="r"><code>see(&#39;ab?c&#39;) # &#39;a&#39;와 &#39;c&#39; 사이에 &#39;b&#39;가 하나 있거나 혹은 아예 없는 경우 (&#39;abc&#39; or &#39;ac&#39;)</code></pre>
 <div id="htmlwidget-4" style="width:960px;height:100%;" class="str_view html-widget"></div>
@@ -198,7 +198,7 @@ projects: []
 줄바꿈
 </td>
 <td style="text-align:center;">
-see(“\n”)
+see(“\\n”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-23" class="str_view html-widget" style="width:960px;height:10px;">
@@ -215,7 +215,7 @@ see(“\n”)
 탭
 </td>
 <td style="text-align:center;">
-see(“\t”)
+see(“\\t”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-24" class="str_view html-widget" style="width:960px;height:10px;">
@@ -232,7 +232,7 @@ see(“\t”)
 공백
 </td>
 <td style="text-align:center;">
-see(“\s”)
+see(“\\s”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-25" class="str_view html-widget" style="width:960px;height:10px;">
@@ -249,7 +249,7 @@ see(“\s”)
 공백아님
 </td>
 <td style="text-align:center;">
-see(“\S”)
+see(“\\S”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-26" class="str_view html-widget" style="width:960px;height:10px;">
@@ -266,7 +266,7 @@ see(“\S”)
 숫자
 </td>
 <td style="text-align:center;">
-see(“\d”)
+see(“\\d”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-27" class="str_view html-widget" style="width:960px;height:10px;">
@@ -283,7 +283,7 @@ see(“\d”)
 숫자아님
 </td>
 <td style="text-align:center;">
-see(“\D”)
+see(“\\D”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-28" class="str_view html-widget" style="width:960px;height:10px;">
@@ -300,7 +300,7 @@ see(“\D”)
 문자
 </td>
 <td style="text-align:center;">
-see(“\w”)
+see(“\\w”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-29" class="str_view html-widget" style="width:960px;height:10px;">
@@ -317,7 +317,7 @@ see(“\w”)
 문자아님
 </td>
 <td style="text-align:center;">
-see(“\W”)
+see(“\\W”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-30" class="str_view html-widget" style="width:960px;height:10px;">
@@ -334,7 +334,7 @@ see(“\W”)
 단어경계
 </td>
 <td style="text-align:center;">
-see(“\b”)
+see(“\\b”)
 </td>
 <td style="text-align:center;width: 0em; ">
 <div id="htmlwidget-31" class="str_view html-widget" style="width:960px;height:10px;">

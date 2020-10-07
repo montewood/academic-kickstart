@@ -2,7 +2,7 @@
 title: '[R] 정규표현식 활용한 텍스트 데이터 다루기' 
 author: JDW
 date: '2020-10-02'
-slug: stringr
+slug: regex
 categories: [R]
 tags: [R, 텍스트, 전처리, 정규표현식]
 subtitle: ''
@@ -22,13 +22,11 @@ library(stringr)
 library(dplyr)
 library(knitr)
 library(kableExtra)
-library(rvest)
-library(httr)
 library(htmltools)
 ```
 
 
-![](/post/2020-09-29-stringr_files/regular-expression.gif){.center}
+![](/post/2020-10-02-regex_files/regular-expression.gif){.center}
 
 &nbsp;문자형 데이터를 다루는데는 수 많은 기법들이 있습니다. R에서 제공하는 기본 함수들을 통해 처리하기도 하고, 텍스트처리에 특화된 패키지함수를 사용하여 원하는 처리를 하곤 하는데요. 오늘은 그 중에 텍스트데이터를 다루는데 효과적으로 사용되는 **정규표현식**을 사용하는 법에 대해 알아보도록 하겠습니다. 
  
@@ -200,15 +198,15 @@ data.frame(
                           '문자', 
                           '문자아님', 
                           '단어경계'), 
-    "예시"            = c('see("\\\\n")', 
-                          'see("\\\\t")', 
-                          'see("\\\\s")', 
-                          'see("\\\\S")', 
-                          'see("\\\\d")', 
-                          'see("\\\\D")', 
-                          'see("\\\\w")', 
-                          'see("\\\\W")', 
-                          'see("\\\\b")'), 
+    "예시"            = c('see("\\\\\\\\n")', 
+                          'see("\\\\\\\\t")', 
+                          'see("\\\\\\\\s")', 
+                          'see("\\\\\\\\S")', 
+                          'see("\\\\\\\\d")', 
+                          'see("\\\\\\\\D")', 
+                          'see("\\\\\\\\w")', 
+                          'see("\\\\\\\\W")', 
+                          'see("\\\\\\\\b")'), 
     "결과"            = c(as.character(as.tags(see('\\n'))), 
                           as.character(as.tags(see('\\t'))),
                           as.character(as.tags(see('\\s'))),
@@ -292,41 +290,3 @@ see('(?<!b)a') # 'a'가 'b' 바로 앞에 있지 않는 경우를 반환
 <https://regexone.com/>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 

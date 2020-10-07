@@ -7,4 +7,6 @@
 
  * 블로그 좌 상단 메뉴의 설정: ./config/_default/menus.toml 파일로 설정.
 
- * 사용자 폰트 설정 : /data/fonts/my_font_set.toml
+ * 사용자 폰트 설정 : ./data/fonts/my_font_set.toml
+
+ * 코드폴딩 : ./static/js/codefolding.js (output code folding custom code : line 18 ~ 20)

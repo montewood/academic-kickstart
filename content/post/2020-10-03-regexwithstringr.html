@@ -1,0 +1,407 @@
+---
+title: '[R] stringr 패키지를 사용한 정규표현식'
+author: JDW
+date: '2020-10-03'
+slug: regexwithstringr
+categories: []
+tags: [R, 텍스트, 전처리, 정규표현식, stringr]
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-10-03T14:48:02+09:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+
+<p><img src="/post/2020-10-03-regexwithstringr_files/stringr_logo.png" class="center" style="width:25.0%" /></p>
+<p> 이전 장에서 R에서 사용되는 정규표현식에 대해 알아보았었는데요. 오늘은 정규표현식을 텍스트 데이터를 처리할때 사용하는 패키지인 <strong><code>stringr</code></strong>과 함께 사용하는 방법에 대해 알아보도록 하겠습니다.</p>
+<div id="stringr" class="section level1">
+<h1>stringr</h1>
+<p> <strong><code>stringr</code></strong> 패키지는 Rstudio의 수석 연구원이신 Hadley Wickham이 개발한 패키지입니다. <strong><code>dplyr</code></strong>, <strong><code>ggplot2</code></strong>등과 같이 데이터를 깔끔한(tidy) 방식으로 처리하는것을 지향하는 <strong><code>tidyverse</code></strong> 패키지군에 속해 있으며, 그 중 <strong><code>stringr</code></strong>은 문자열 처리에 특화된 패키지입니다. ’string’의 준말인 <code>str_</code>이 함수 머릿말에 항상 등장하는 것이 특징입니다.</p>
+<p> <strong><code>stringr</code></strong>패키지의 주요 기능을 아래와 같이 분류하였고 각 경우에 맞는 상황을 가정하여 알아보도록 하겠습니다.</p>
+<p><a href="#일치">1. 특정 패턴과 <strong>‘일치’</strong></a> <br>
+<a href="#카운팅">2. 특정 패턴의 <strong>‘카운팅’</strong></a> <br>
+<a href="#포함">3. 특정 패턴이 <strong>‘포함’</strong>된 경우</a> <br>
+<a href="#위치">4. 특정 패턴의 <strong>‘위치’</strong>를 반환</a> <br>
+<a href="#바꾸기">5. 특정 패턴을 새로운 것으로 <strong>‘바꾸는’</strong> 경우</a> <br>
+<a href="#나누기">6. 특정 패턴을 기준으로 <strong>‘나누는’</strong> 경우</a><br></p>
+<div id="예제-문장" class="section level2">
+<h2>예제 문장</h2>
+<p> 연습용으로 사용할 문장은 stringr 패키지에 내장되어 있는 <code>sentence</code> 데이터를 사용하겠습니다. <code>sentence</code>는 총 1000문장으로 구성되어 있는데, 문장 전체를 사용할 필요가 없으므로 10문장 정도만을 추려서 사용하도록 하겠습니다.</p>
+<pre class="r"><code>regex_sentences &lt;- stringr::sentences[1:10] # 예제용 문장 생성
+regex_sentences</code></pre>
+<pre><code>##  [1] &quot;The birch canoe slid on the smooth planks.&quot; 
+##  [2] &quot;Glue the sheet to the dark blue background.&quot;
+##  [3] &quot;It&#39;s easy to tell the depth of a well.&quot;     
+##  [4] &quot;These days a chicken leg is a rare dish.&quot;   
+##  [5] &quot;Rice is often served in round bowls.&quot;       
+##  [6] &quot;The juice of lemons makes fine punch.&quot;      
+##  [7] &quot;The box was thrown beside the parked truck.&quot;
+##  [8] &quot;The hogs were fed chopped corn and garbage.&quot;
+##  [9] &quot;Four hours of steady work faced us.&quot;        
+## [10] &quot;Large size in stockings is hard to sell.&quot;</code></pre>
+<div id="일치" class="section level3">
+<h3>일치</h3>
+<ul>
+<li> <code>str_detect()</code>함수는 특정 문자 혹은 패턴(정규표현식)과 일치하는 경우를 찾을때 사용하며, 실행 결과로서 boolean(참, 거짓)을 반환합니다.</li>
+</ul>
+<pre class="r"><code>str_detect(regex_sentences, &#39;[aeiou]&#39;) # 알파벳 모음 &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39;가 있을 경우 TRUE</code></pre>
+<pre><code>##  [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE</code></pre>
+<pre class="r"><code>str_detect(regex_sentences, &#39;[easy]&#39;)  # 알파벳 &#39;e&#39; or &#39;a&#39; or &#39;s&#39; or &#39;y&#39;가 있을 경우 TRUE </code></pre>
+<pre><code>##  [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE</code></pre>
+<pre class="r"><code>str_detect(regex_sentences, &#39;(easy)&#39;)  # 알파벳 &#39;easy&#39;가 있을 경우 TRUE </code></pre>
+<pre><code>##  [1] FALSE FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE</code></pre>
+<ul>
+<li> <code>str_extract()</code>함수는 특정 문자 혹은 패턴(정규표현식)과 일치하는 경우, 그것을 반환합니다.</li>
+</ul>
+<pre class="r"><code>str_extract(regex_sentences, &#39;[aeiou]&#39;) # &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39; 글자가 존재하면 그것을 반환 </code></pre>
+<pre><code>##  [1] &quot;e&quot; &quot;u&quot; &quot;e&quot; &quot;e&quot; &quot;i&quot; &quot;e&quot; &quot;e&quot; &quot;e&quot; &quot;o&quot; &quot;a&quot;</code></pre>
+<pre class="r"><code>str_extract(regex_sentences, &#39;[:punct:]&#39;) # 문장부호가 존재하면 그것을 반환 </code></pre>
+<pre><code>##  [1] &quot;.&quot; &quot;.&quot; &quot;&#39;&quot; &quot;.&quot; &quot;.&quot; &quot;.&quot; &quot;.&quot; &quot;.&quot; &quot;.&quot; &quot;.&quot;</code></pre>
+<p> 함수는 조건에 일치하는 결과를 반환하였는데요. 자세히 보면 조건에 일치한 것이 여러개 있음에도 불구하고 오직 최초 값만을 반환하는 것을 볼 수 있습니다. 그렇다면 조건에 일치하는 모든 값을 찾고자 할 땐 어떻게 해야할까요? 바로 <code>str_extract_all()</code> 함수를 사용하면 됩니다. <strong><code>stringr</code></strong>패키지 함수 중 몇몇의 함수는 함수 말미에 <code>_all</code>이 붙는 함수들이 있습니다. 이들 함수들은 조건에 맞는 모든 값을 반환하는 특징이 있습니다.</p>
+<pre class="r"><code>str_extract_all(regex_sentences, &#39;[aeiou]&#39;)</code></pre>
+<pre><code>## [[1]]
+##  [1] &quot;e&quot; &quot;i&quot; &quot;a&quot; &quot;o&quot; &quot;e&quot; &quot;i&quot; &quot;o&quot; &quot;e&quot; &quot;o&quot; &quot;o&quot; &quot;a&quot;
+## 
+## [[2]]
+##  [1] &quot;u&quot; &quot;e&quot; &quot;e&quot; &quot;e&quot; &quot;e&quot; &quot;o&quot; &quot;e&quot; &quot;a&quot; &quot;u&quot; &quot;e&quot; &quot;a&quot; &quot;o&quot; &quot;u&quot;
+## 
+## [[3]]
+## [1] &quot;e&quot; &quot;a&quot; &quot;o&quot; &quot;e&quot; &quot;e&quot; &quot;e&quot; &quot;o&quot; &quot;a&quot; &quot;e&quot;
+## 
+## [[4]]
+##  [1] &quot;e&quot; &quot;e&quot; &quot;a&quot; &quot;a&quot; &quot;i&quot; &quot;e&quot; &quot;e&quot; &quot;i&quot; &quot;a&quot; &quot;a&quot; &quot;e&quot; &quot;i&quot;
+## 
+## [[5]]
+##  [1] &quot;i&quot; &quot;e&quot; &quot;i&quot; &quot;o&quot; &quot;e&quot; &quot;e&quot; &quot;e&quot; &quot;i&quot; &quot;o&quot; &quot;u&quot; &quot;o&quot;
+## 
+## [[6]]
+##  [1] &quot;e&quot; &quot;u&quot; &quot;i&quot; &quot;e&quot; &quot;o&quot; &quot;e&quot; &quot;o&quot; &quot;a&quot; &quot;e&quot; &quot;i&quot; &quot;e&quot; &quot;u&quot;
+## 
+## [[7]]
+##  [1] &quot;e&quot; &quot;o&quot; &quot;a&quot; &quot;o&quot; &quot;e&quot; &quot;i&quot; &quot;e&quot; &quot;e&quot; &quot;a&quot; &quot;e&quot; &quot;u&quot;
+## 
+## [[8]]
+##  [1] &quot;e&quot; &quot;o&quot; &quot;e&quot; &quot;e&quot; &quot;e&quot; &quot;o&quot; &quot;e&quot; &quot;o&quot; &quot;a&quot; &quot;a&quot; &quot;a&quot; &quot;e&quot;
+## 
+## [[9]]
+##  [1] &quot;o&quot; &quot;u&quot; &quot;o&quot; &quot;u&quot; &quot;o&quot; &quot;e&quot; &quot;a&quot; &quot;o&quot; &quot;a&quot; &quot;e&quot; &quot;u&quot;
+## 
+## [[10]]
+##  [1] &quot;a&quot; &quot;e&quot; &quot;i&quot; &quot;e&quot; &quot;i&quot; &quot;o&quot; &quot;i&quot; &quot;i&quot; &quot;a&quot; &quot;o&quot; &quot;e&quot;</code></pre>
+<pre class="r"><code>str_extract_all(regex_sentences, &#39;[:punct:]&#39;)</code></pre>
+<pre><code>## [[1]]
+## [1] &quot;.&quot;
+## 
+## [[2]]
+## [1] &quot;.&quot;
+## 
+## [[3]]
+## [1] &quot;&#39;&quot; &quot;.&quot;
+## 
+## [[4]]
+## [1] &quot;.&quot;
+## 
+## [[5]]
+## [1] &quot;.&quot;
+## 
+## [[6]]
+## [1] &quot;.&quot;
+## 
+## [[7]]
+## [1] &quot;.&quot;
+## 
+## [[8]]
+## [1] &quot;.&quot;
+## 
+## [[9]]
+## [1] &quot;.&quot;
+## 
+## [[10]]
+## [1] &quot;.&quot;</code></pre>
+<p> <code>str_extract_all()</code> 함수의 결과, 조건에 부합하는 모든 값이 list 형으로 반환된 것을 볼 수 있습니다.</p>
+</div>
+<div id="카운팅" class="section level3">
+<h3>카운팅</h3>
+<ul>
+<li> <code>str_count()</code>함수는 특정 문자 혹은 패턴(정규표현식)과 일치하는 경우를 계산합니다.</li>
+</ul>
+<pre class="r"><code>str_count(regex_sentences, &#39;[aeiou]&#39;) # &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39; 문자의 개수를 반환 </code></pre>
+<pre><code>##  [1] 11 13  9 12 11 12 11 12 11 11</code></pre>
+<pre class="r"><code>str_count(regex_sentences, &#39;^(The)&#39;) # 시작이 &#39;The&#39;인 경우를 셈 </code></pre>
+<pre><code>##  [1] 1 0 0 1 0 1 1 1 0 0</code></pre>
+</div>
+<div id="포함" class="section level3">
+<h3>포함</h3>
+<ul>
+<li> <code>str_subset()</code>함수는 특정 문자 혹은 패턴(정규표현식)이 포함된 경우를 반환합니다.</li>
+</ul>
+<pre class="r"><code>str_subset(regex_sentences, &#39;[aeiou]&#39;) # &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39; 문자가 포함된 경우를 반환 </code></pre>
+<pre><code>##  [1] &quot;The birch canoe slid on the smooth planks.&quot; 
+##  [2] &quot;Glue the sheet to the dark blue background.&quot;
+##  [3] &quot;It&#39;s easy to tell the depth of a well.&quot;     
+##  [4] &quot;These days a chicken leg is a rare dish.&quot;   
+##  [5] &quot;Rice is often served in round bowls.&quot;       
+##  [6] &quot;The juice of lemons makes fine punch.&quot;      
+##  [7] &quot;The box was thrown beside the parked truck.&quot;
+##  [8] &quot;The hogs were fed chopped corn and garbage.&quot;
+##  [9] &quot;Four hours of steady work faced us.&quot;        
+## [10] &quot;Large size in stockings is hard to sell.&quot;</code></pre>
+<pre class="r"><code>str_subset(regex_sentences, &#39;^(The)&#39;)  # 시작이 &#39;The&#39;인 문장을 반환</code></pre>
+<pre><code>## [1] &quot;The birch canoe slid on the smooth planks.&quot; 
+## [2] &quot;These days a chicken leg is a rare dish.&quot;   
+## [3] &quot;The juice of lemons makes fine punch.&quot;      
+## [4] &quot;The box was thrown beside the parked truck.&quot;
+## [5] &quot;The hogs were fed chopped corn and garbage.&quot;</code></pre>
+<pre class="r"><code>str_subset(regex_sentences, &#39;p[:alpha:]{1,}\\.$&#39;) # &#39;p&#39;뒤에 알파벳이 한번 이상 나오면서 마침표로 끝나는 경우 </code></pre>
+<pre><code>## [1] &quot;The birch canoe slid on the smooth planks.&quot;
+## [2] &quot;The juice of lemons makes fine punch.&quot;</code></pre>
+</div>
+<div id="위치" class="section level3">
+<h3>위치</h3>
+<ul>
+<li> <code>str_locate()</code>함수는 특정 문자 혹은 패턴(정규표현식)에 맞는 경우의 시작 지점과 끝 지점을 반환합니다. R에 기본적으로 내장되어 있는 영어 소문자 데이터인 <code>letters</code>를 통해 알아보겠습니다.</li>
+</ul>
+<pre class="r"><code>letters</code></pre>
+<pre><code>##  [1] &quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot; &quot;e&quot; &quot;f&quot; &quot;g&quot; &quot;h&quot; &quot;i&quot; &quot;j&quot; &quot;k&quot; &quot;l&quot; &quot;m&quot; &quot;n&quot; &quot;o&quot; &quot;p&quot; &quot;q&quot; &quot;r&quot; &quot;s&quot;
+## [20] &quot;t&quot; &quot;u&quot; &quot;v&quot; &quot;w&quot; &quot;x&quot; &quot;y&quot; &quot;z&quot;</code></pre>
+<p> 패턴의 위치를 찾기 위해선 하나로 묶인 데이터가 필요하므로 <code>str_c()</code> 함수를 사용하여 하나의 벡터로 묶었습니다. (<code>str_c()</code>함수는 <strong><code>stringr</code></strong>패키지의 문자를 결합하는 함수. R의 내장함수인 <code>paste()</code>와 동일하게 동작)</p>
+<pre class="r"><code>letters &lt;- str_c(letters, collapse = &#39;&#39;);
+letters # 하나의 벡터값으로 변환 </code></pre>
+<pre><code>## [1] &quot;abcdefghijklmnopqrstuvwxyz&quot;</code></pre>
+<pre class="r"><code>str_locate(letters, &#39;[a-z]+&#39;) # &#39;a&#39;부터 &#39;z&#39; 까지의 문자가 한개 이상 나오는 경우의 시작과 끝을 반환 </code></pre>
+<pre><code>##      start end
+## [1,]     1  26</code></pre>
+<pre class="r"><code>str_locate(letters, &#39;^[a][a-z]+[z]$&#39;) # 시작이 &#39;a&#39;이며, 바로 뒤에 &#39;a&#39; 부터 &#39;z&#39;까지의 문자 중 하나가 한번 이상 나오며, 끝이 &#39;z&#39;인 경우의 시작 지점과 끝 지점을 반환.</code></pre>
+<pre><code>##      start end
+## [1,]     1  26</code></pre>
+<pre class="r"><code>str_locate(letters, &#39;^[a-z][a-z]+$&#39;) # 시작이 &#39;a&#39; 부터 &#39;z&#39; 까지의 문자 중 하나이며, 끝이 &#39;a&#39; 부터 &#39;z&#39; 까지의 문자 중 하나인 경우의 시작 지점과 끝 지점.</code></pre>
+<pre><code>##      start end
+## [1,]     1  26</code></pre>
+<pre class="r"><code>str_locate(letters, &#39;(abcde)&#39;) # &#39;abcde&#39;의 시작 지점과 끝 지점을 반환 </code></pre>
+<pre><code>##      start end
+## [1,]     1   5</code></pre>
+<pre class="r"><code>str_locate(letters, &#39;(xyz)&#39;) # &#39;xyz&#39;의 시작 지점과 끝 지점을 반환  </code></pre>
+<pre><code>##      start end
+## [1,]    24  26</code></pre>
+<p> <code>str_locate_all()</code>함수를 통해 조건에 맞는 모든 값의 위치를 추출할 수 있습니다.</p>
+<pre class="r"><code>str_locate(letters, &#39;[aeiou][^aeiou]+&#39;) # &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39;문자 뒤에 &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39; 문자가 아닌 문자가 하나 이상 나오는 최초 경우의 시작 지점과 끝 지점을 반환 </code></pre>
+<pre><code>##      start end
+## [1,]     1   4</code></pre>
+<pre class="r"><code>str_locate_all(letters, &#39;[aeiou][^aeiou]+&#39;) # &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39;문자 뒤에 &#39;a&#39; or &#39;e&#39; or &#39;i&#39; or &#39;o&#39; or &#39;u&#39; 문자가 아닌 문자가 하나 이상 나오는 모든 경우의 시작 지점과 끝 지점을 반환 </code></pre>
+<pre><code>## [[1]]
+##      start end
+## [1,]     1   4
+## [2,]     5   8
+## [3,]     9  14
+## [4,]    15  20
+## [5,]    21  26</code></pre>
+</div>
+<div id="바꾸기" class="section level3">
+<h3>바꾸기</h3>
+<ul>
+<li> <code>str_replace()</code>는 특정 문자 혹은 패턴(정규표현식)에 맞는 경우를 새로운 문자로 바꾸는 함수입니다.</li>
+</ul>
+<pre class="r"><code>str_replace(regex_sentences, &#39;k&#39;, &quot;&#39;K&#39;&quot;) # 최초로 매칭되는 문자 k를 &#39;K&#39;로 변환  </code></pre>
+<pre><code>##  [1] &quot;The birch canoe slid on the smooth plan&#39;K&#39;s.&quot; 
+##  [2] &quot;Glue the sheet to the dar&#39;K&#39; blue background.&quot;
+##  [3] &quot;It&#39;s easy to tell the depth of a well.&quot;       
+##  [4] &quot;These days a chic&#39;K&#39;en leg is a rare dish.&quot;   
+##  [5] &quot;Rice is often served in round bowls.&quot;         
+##  [6] &quot;The juice of lemons ma&#39;K&#39;es fine punch.&quot;      
+##  [7] &quot;The box was thrown beside the par&#39;K&#39;ed truck.&quot;
+##  [8] &quot;The hogs were fed chopped corn and garbage.&quot;  
+##  [9] &quot;Four hours of steady wor&#39;K&#39; faced us.&quot;        
+## [10] &quot;Large size in stoc&#39;K&#39;ings is hard to sell.&quot;</code></pre>
+<pre class="r"><code>str_replace(regex_sentences, &#39;\\.&#39;, &#39;\\?&#39;) # 최초로 매칭되는 마침표를 물음표로 변환 </code></pre>
+<pre><code>##  [1] &quot;The birch canoe slid on the smooth planks?&quot; 
+##  [2] &quot;Glue the sheet to the dark blue background?&quot;
+##  [3] &quot;It&#39;s easy to tell the depth of a well?&quot;     
+##  [4] &quot;These days a chicken leg is a rare dish?&quot;   
+##  [5] &quot;Rice is often served in round bowls?&quot;       
+##  [6] &quot;The juice of lemons makes fine punch?&quot;      
+##  [7] &quot;The box was thrown beside the parked truck?&quot;
+##  [8] &quot;The hogs were fed chopped corn and garbage?&quot;
+##  [9] &quot;Four hours of steady work faced us?&quot;        
+## [10] &quot;Large size in stockings is hard to sell?&quot;</code></pre>
+<p> 마찬가지로 <code>str_replace_all()</code>함수를 통해 조건에 맞는 모든 값을 바꿀 수 있습니다.</p>
+<pre class="r"><code>str_replace(regex_sentences, &#39;[:alpha:]{1,}&#39;, &#39;word&#39;) # 최초로 매칭되는 알파뱃이 한개 이상인 경우를 &#39;word&#39;로 변환 </code></pre>
+<pre><code>##  [1] &quot;word birch canoe slid on the smooth planks.&quot; 
+##  [2] &quot;word the sheet to the dark blue background.&quot; 
+##  [3] &quot;word&#39;s easy to tell the depth of a well.&quot;    
+##  [4] &quot;word days a chicken leg is a rare dish.&quot;     
+##  [5] &quot;word is often served in round bowls.&quot;        
+##  [6] &quot;word juice of lemons makes fine punch.&quot;      
+##  [7] &quot;word box was thrown beside the parked truck.&quot;
+##  [8] &quot;word hogs were fed chopped corn and garbage.&quot;
+##  [9] &quot;word hours of steady work faced us.&quot;         
+## [10] &quot;word size in stockings is hard to sell.&quot;</code></pre>
+<pre class="r"><code>str_replace_all(regex_sentences, &#39;[:alpha:]{1,}&#39;, &#39;word&#39;) # 알파뱃이 한개 이상인 모든 값을 &#39;word&#39;라는 단어로 변환 </code></pre>
+<pre><code>##  [1] &quot;word word word word word word word word.&quot;          
+##  [2] &quot;word word word word word word word word.&quot;          
+##  [3] &quot;word&#39;word word word word word word word word word.&quot;
+##  [4] &quot;word word word word word word word word word.&quot;     
+##  [5] &quot;word word word word word word word.&quot;               
+##  [6] &quot;word word word word word word word.&quot;               
+##  [7] &quot;word word word word word word word word.&quot;          
+##  [8] &quot;word word word word word word word word.&quot;          
+##  [9] &quot;word word word word word word word.&quot;               
+## [10] &quot;word word word word word word word word.&quot;</code></pre>
+<pre class="r"><code>str_replace(regex_sentences, &#39;[:space:]&#39;, &#39;&#39;) # 최초로 매칭되는 띄어쓰기를 공백으로 변환 </code></pre>
+<pre><code>##  [1] &quot;Thebirch canoe slid on the smooth planks.&quot; 
+##  [2] &quot;Gluethe sheet to the dark blue background.&quot;
+##  [3] &quot;It&#39;seasy to tell the depth of a well.&quot;     
+##  [4] &quot;Thesedays a chicken leg is a rare dish.&quot;   
+##  [5] &quot;Riceis often served in round bowls.&quot;       
+##  [6] &quot;Thejuice of lemons makes fine punch.&quot;      
+##  [7] &quot;Thebox was thrown beside the parked truck.&quot;
+##  [8] &quot;Thehogs were fed chopped corn and garbage.&quot;
+##  [9] &quot;Fourhours of steady work faced us.&quot;        
+## [10] &quot;Largesize in stockings is hard to sell.&quot;</code></pre>
+<pre class="r"><code>str_replace_all(regex_sentences, &#39;[:space:]&#39;, &#39;&#39;) # 매칭되는 모든 띄어쓰기를 공백으로 변환 </code></pre>
+<pre><code>##  [1] &quot;Thebirchcanoeslidonthesmoothplanks.&quot; 
+##  [2] &quot;Gluethesheettothedarkbluebackground.&quot;
+##  [3] &quot;It&#39;seasytotellthedepthofawell.&quot;      
+##  [4] &quot;Thesedaysachickenlegisararedish.&quot;    
+##  [5] &quot;Riceisoftenservedinroundbowls.&quot;      
+##  [6] &quot;Thejuiceoflemonsmakesfinepunch.&quot;     
+##  [7] &quot;Theboxwasthrownbesidetheparkedtruck.&quot;
+##  [8] &quot;Thehogswerefedchoppedcornandgarbage.&quot;
+##  [9] &quot;Fourhoursofsteadyworkfacedus.&quot;       
+## [10] &quot;Largesizeinstockingsishardtosell.&quot;</code></pre>
+</div>
+<div id="나누기" class="section level3">
+<h3>나누기</h3>
+<ul>
+<li> <code>str_split()</code>는 특정 문자 혹은 패턴(정규표현식)을 기준으로 값을 나누는 함수입니다. 이때 기준이된 문자 혹은 패턴은 제거됩니다.</li>
+</ul>
+<pre class="r"><code>str_split(regex_sentences, &#39;[:upper:]&#39;) # 대문자를 기준으로 분절 </code></pre>
+<pre><code>## [[1]]
+## [1] &quot;&quot;                                         
+## [2] &quot;he birch canoe slid on the smooth planks.&quot;
+## 
+## [[2]]
+## [1] &quot;&quot;                                          
+## [2] &quot;lue the sheet to the dark blue background.&quot;
+## 
+## [[3]]
+## [1] &quot;&quot;                                     
+## [2] &quot;t&#39;s easy to tell the depth of a well.&quot;
+## 
+## [[4]]
+## [1] &quot;&quot;                                       
+## [2] &quot;hese days a chicken leg is a rare dish.&quot;
+## 
+## [[5]]
+## [1] &quot;&quot;                                    &quot;ice is often served in round bowls.&quot;
+## 
+## [[6]]
+## [1] &quot;&quot;                                    
+## [2] &quot;he juice of lemons makes fine punch.&quot;
+## 
+## [[7]]
+## [1] &quot;&quot;                                          
+## [2] &quot;he box was thrown beside the parked truck.&quot;
+## 
+## [[8]]
+## [1] &quot;&quot;                                          
+## [2] &quot;he hogs were fed chopped corn and garbage.&quot;
+## 
+## [[9]]
+## [1] &quot;&quot;                                   &quot;our hours of steady work faced us.&quot;
+## 
+## [[10]]
+## [1] &quot;&quot;                                       
+## [2] &quot;arge size in stockings is hard to sell.&quot;</code></pre>
+<pre class="r"><code>str_split(regex_sentences, &#39;\\b&#39;) # 문자의 바운더리를 기준으로 분절 </code></pre>
+<pre><code>## [[1]]
+##  [1] &quot;&quot;       &quot;The&quot;    &quot; &quot;      &quot;birch&quot;  &quot; &quot;      &quot;canoe&quot;  &quot; &quot;      &quot;slid&quot;  
+##  [9] &quot; &quot;      &quot;on&quot;     &quot; &quot;      &quot;the&quot;    &quot; &quot;      &quot;smooth&quot; &quot; &quot;      &quot;planks&quot;
+## [17] &quot;.&quot;     
+## 
+## [[2]]
+##  [1] &quot;&quot;           &quot;Glue&quot;       &quot; &quot;          &quot;the&quot;        &quot; &quot;         
+##  [6] &quot;sheet&quot;      &quot; &quot;          &quot;to&quot;         &quot; &quot;          &quot;the&quot;       
+## [11] &quot; &quot;          &quot;dark&quot;       &quot; &quot;          &quot;blue&quot;       &quot; &quot;         
+## [16] &quot;background&quot; &quot;.&quot;         
+## 
+## [[3]]
+##  [1] &quot;&quot;      &quot;It&quot;    &quot;&#39;&quot;     &quot;s&quot;     &quot; &quot;     &quot;easy&quot;  &quot; &quot;     &quot;to&quot;    &quot; &quot;    
+## [10] &quot;tell&quot;  &quot; &quot;     &quot;the&quot;   &quot; &quot;     &quot;depth&quot; &quot; &quot;     &quot;of&quot;    &quot; &quot;     &quot;a&quot;    
+## [19] &quot; &quot;     &quot;well&quot;  &quot;.&quot;    
+## 
+## [[4]]
+##  [1] &quot;&quot;        &quot;These&quot;   &quot; &quot;       &quot;days&quot;    &quot; &quot;       &quot;a&quot;       &quot; &quot;      
+##  [8] &quot;chicken&quot; &quot; &quot;       &quot;leg&quot;     &quot; &quot;       &quot;is&quot;      &quot; &quot;       &quot;a&quot;      
+## [15] &quot; &quot;       &quot;rare&quot;    &quot; &quot;       &quot;dish&quot;    &quot;.&quot;      
+## 
+## [[5]]
+##  [1] &quot;&quot;       &quot;Rice&quot;   &quot; &quot;      &quot;is&quot;     &quot; &quot;      &quot;often&quot;  &quot; &quot;      &quot;served&quot;
+##  [9] &quot; &quot;      &quot;in&quot;     &quot; &quot;      &quot;round&quot;  &quot; &quot;      &quot;bowls&quot;  &quot;.&quot;     
+## 
+## [[6]]
+##  [1] &quot;&quot;       &quot;The&quot;    &quot; &quot;      &quot;juice&quot;  &quot; &quot;      &quot;of&quot;     &quot; &quot;      &quot;lemons&quot;
+##  [9] &quot; &quot;      &quot;makes&quot;  &quot; &quot;      &quot;fine&quot;   &quot; &quot;      &quot;punch&quot;  &quot;.&quot;     
+## 
+## [[7]]
+##  [1] &quot;&quot;       &quot;The&quot;    &quot; &quot;      &quot;box&quot;    &quot; &quot;      &quot;was&quot;    &quot; &quot;      &quot;thrown&quot;
+##  [9] &quot; &quot;      &quot;beside&quot; &quot; &quot;      &quot;the&quot;    &quot; &quot;      &quot;parked&quot; &quot; &quot;      &quot;truck&quot; 
+## [17] &quot;.&quot;     
+## 
+## [[8]]
+##  [1] &quot;&quot;        &quot;The&quot;     &quot; &quot;       &quot;hogs&quot;    &quot; &quot;       &quot;were&quot;    &quot; &quot;      
+##  [8] &quot;fed&quot;     &quot; &quot;       &quot;chopped&quot; &quot; &quot;       &quot;corn&quot;    &quot; &quot;       &quot;and&quot;    
+## [15] &quot; &quot;       &quot;garbage&quot; &quot;.&quot;      
+## 
+## [[9]]
+##  [1] &quot;&quot;       &quot;Four&quot;   &quot; &quot;      &quot;hours&quot;  &quot; &quot;      &quot;of&quot;     &quot; &quot;      &quot;steady&quot;
+##  [9] &quot; &quot;      &quot;work&quot;   &quot; &quot;      &quot;faced&quot;  &quot; &quot;      &quot;us&quot;     &quot;.&quot;     
+## 
+## [[10]]
+##  [1] &quot;&quot;          &quot;Large&quot;     &quot; &quot;         &quot;size&quot;      &quot; &quot;         &quot;in&quot;       
+##  [7] &quot; &quot;         &quot;stockings&quot; &quot; &quot;         &quot;is&quot;        &quot; &quot;         &quot;hard&quot;     
+## [13] &quot; &quot;         &quot;to&quot;        &quot; &quot;         &quot;sell&quot;      &quot;.&quot;</code></pre>
+<pre class="r"><code>str_split(regex_sentences, &#39;\\s&#39;) # 띄어쓰기를 기준으로 분절 </code></pre>
+<pre><code>## [[1]]
+## [1] &quot;The&quot;     &quot;birch&quot;   &quot;canoe&quot;   &quot;slid&quot;    &quot;on&quot;      &quot;the&quot;     &quot;smooth&quot; 
+## [8] &quot;planks.&quot;
+## 
+## [[2]]
+## [1] &quot;Glue&quot;        &quot;the&quot;         &quot;sheet&quot;       &quot;to&quot;          &quot;the&quot;        
+## [6] &quot;dark&quot;        &quot;blue&quot;        &quot;background.&quot;
+## 
+## [[3]]
+## [1] &quot;It&#39;s&quot;  &quot;easy&quot;  &quot;to&quot;    &quot;tell&quot;  &quot;the&quot;   &quot;depth&quot; &quot;of&quot;    &quot;a&quot;     &quot;well.&quot;
+## 
+## [[4]]
+## [1] &quot;These&quot;   &quot;days&quot;    &quot;a&quot;       &quot;chicken&quot; &quot;leg&quot;     &quot;is&quot;      &quot;a&quot;      
+## [8] &quot;rare&quot;    &quot;dish.&quot;  
+## 
+## [[5]]
+## [1] &quot;Rice&quot;   &quot;is&quot;     &quot;often&quot;  &quot;served&quot; &quot;in&quot;     &quot;round&quot;  &quot;bowls.&quot;
+## 
+## [[6]]
+## [1] &quot;The&quot;    &quot;juice&quot;  &quot;of&quot;     &quot;lemons&quot; &quot;makes&quot;  &quot;fine&quot;   &quot;punch.&quot;
+## 
+## [[7]]
+## [1] &quot;The&quot;    &quot;box&quot;    &quot;was&quot;    &quot;thrown&quot; &quot;beside&quot; &quot;the&quot;    &quot;parked&quot; &quot;truck.&quot;
+## 
+## [[8]]
+## [1] &quot;The&quot;      &quot;hogs&quot;     &quot;were&quot;     &quot;fed&quot;      &quot;chopped&quot;  &quot;corn&quot;     &quot;and&quot;     
+## [8] &quot;garbage.&quot;
+## 
+## [[9]]
+## [1] &quot;Four&quot;   &quot;hours&quot;  &quot;of&quot;     &quot;steady&quot; &quot;work&quot;   &quot;faced&quot;  &quot;us.&quot;   
+## 
+## [[10]]
+## [1] &quot;Large&quot;     &quot;size&quot;      &quot;in&quot;        &quot;stockings&quot; &quot;is&quot;        &quot;hard&quot;     
+## [7] &quot;to&quot;        &quot;sell.&quot;</code></pre>
+</div>
+</div>
+</div>
