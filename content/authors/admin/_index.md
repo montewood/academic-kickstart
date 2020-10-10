@@ -48,9 +48,13 @@ social:
 - icon: github
   icon_pack: fab
   link: https://github.com/montewood
-- icon: facebook
-  icon_pack: fab
-  link: https://www.facebook.com/profile.php?id=100001307093983
+- icon: rss
+  icon_pack: fas
+  link: https://www.jdwblog.com/post/index.xml
+  
+# - icon: facebook
+#   icon_pack: fab
+#   link: https://www.facebook.com/profile.php?id=100001307093983
 # - icon: facebook
 #   icon_pack: fab
 #   link: https://twitter.com/GeorgeCushen
