@@ -1,0 +1,222 @@
+---
+title: '[R] Rstudio의 테마를 변경해 사용하기(With rsthemes Package)' 
+author: JDW
+date: '2020-10-11'
+slug: rsthemes
+categories:
+  - R
+tags: [R, Rstudio, rsthemes]
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-10-11T10:37:42+09:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+
+<p><img src="https://media.giphy.com/media/Ai6o3zm3NwvOazPxkm/giphy.gif" style="width:80.0%" /></p>
+<p> 데이터분석 혹은 R프로그래밍을 진행할 때 가장 많이 보는것이 (아마도) 구글, 스택오버플로우, 그리고 Rstudio일 것입니다.대다수의 R 유저들은 사용하는 IDE로서 <strong>Rstudio</strong>를 선호하는데요. 저 역시도 Rstudio에서 제공하는 각종 편의기능 덕분에 vscode와 같은 다른 IDE로 쉽사리 넘어가지 못하는것 같습니다. 그러나 오랜시간 비슷한 화면만을 보다보면 제아무리 만족스럽던 것도 점차 지루해지기 쉽상입니다. 이럴때 약간의 변화만 주어도 한결 나은 코딩을 할 수 있는데요. 오늘은 Rstudio에서 제공하는 기본테마를 벗어나 새롭고 다양한 테마를 제공할 뿐만아니라 테마변경을 손쉽게 하는 <a href="https://github.com/gadenbuie/rsthemes"><strong><code>rsthemes</code></strong></a> 패키지를 소개하고자 합니다.</p>
+<div id="기본-테마-변경" class="section level1">
+<h1>기본 테마 변경</h1>
+<p> Rstudio를 처음 설치하면 4개의 패널로 나뉜 흰색의 기본 테마를 마주치게 됩니다. 기본 테마 역시 멋지지만 오랜시간 흰색의 배경을 응시하다보면 눈이 쉽사리 피로해지곤 하기때문에 많은 개발자들은 개발환경에 있어서 밝은것보다 어두운 테마를 더욱 선호하는것 같습니다. 먼저 기본적인 Rstudio의 테마의 변경은 상단의 Tools &gt; Global Options &gt; Appearence 탭을 통해 변경이 가능합니다.</p>
+<p><img src="/post/2020-10-11-rsthemes_files/K-20201011-162316.png" /></p>
+<p><img src="/post/2020-10-11-rsthemes_files/K-20201011-162354.png" /></p>
+<img src="/post/2020-10-11-rsthemes_files/K-20201011-162403.png" />
+<center>
+<em>기본테마변경</em>
+</center>
+</div>
+<div id="rsthemes-package" class="section level1">
+<h1>rsthemes package</h1>
+<p> 기본적으로 제공되는 테마가 불충분하다고 느껴지신다면 이 패키지가 도움이 될 수도 있습니다. 서두에서도 소개했다시피 <a href="https://github.com/gadenbuie/rsthemes"><strong><code>rsthemes</code></strong></a>패키지는 Rstudio에서 사용할 수 있는 90여가지의 추가적인 테마를 제공합니다.</p>
+<div id="설치" class="section level2">
+<h2>설치</h2>
+<p> <a href="https://github.com/gadenbuie/rsthemes"><strong><code>rsthemes</code></strong></a>는 cran에 정식으로 등록되지 않은 패키지이기 때문에 개발자 깃헙 레포지터리에서 다운받을 수 있습니다.</p>
+<pre class="r"><code># install.packages(&quot;devtools&quot;)
+devtools::install_github(&quot;gadenbuie/rsthemes&quot;)</code></pre>
+<p> 패키지를 다운받은 후, 추가 테마를 설치합니다.</p>
+<pre class="r"><code>rsthemes::install_rsthemes()</code></pre>
+<p>  base16테마를 설치하는 옵션을 지정하면 더욱 많은 테마를 설치할 수 있습니다.</p>
+<pre class="r"><code>rsthemes::install_rsthemes(include_base16 = TRUE)</code></pre>
+</div>
+<div id="사용" class="section level2">
+<h2>사용</h2>
+<p> 패키지와 테마의 설치까지 마치셨다면 <a href="https://github.com/gadenbuie/rsthemes"><strong><code>rsthemes</code></strong></a>에서 제공하는 함수들을 통해 테마를 관리 할 수 있습니다.
+ 맨 먼저 설치된 테마의 목록들을 확인합니다.</p>
+<pre class="r"><code># 설치된 테마의 목록 확인
+rsthemes::list_rsthemes()
+#  [1] &quot;a11y-dark {rsthemes}&quot;                   
+#  [2] &quot;a11y-light {rsthemes}&quot;                  
+#  [3] &quot;base16 3024 {rsthemes}&quot;                 
+#  [4] &quot;base16 Apathy {rsthemes}&quot;               
+#  [5] &quot;base16 Ashes {rsthemes}&quot;                
+#  [6] &quot;base16 Atelier Cave {rsthemes}&quot;         
+#  [7] &quot;base16 Atelier Dune {rsthemes}&quot;         
+#  [8] &quot;base16 Atelier Estuary {rsthemes}&quot;      
+#  [9] &quot;base16 Atelier Forest {rsthemes}&quot;       
+# [10] &quot;base16 Atelier Heath {rsthemes}&quot;        
+# [11] &quot;base16 Atelier Lakeside {rsthemes}&quot;     
+# [12] &quot;base16 Atelier Plateau {rsthemes}&quot;      
+# [13] &quot;base16 Atelier Savanna {rsthemes}&quot;      
+# [14] &quot;base16 Atelier Seaside {rsthemes}&quot;      
+# [15] &quot;base16 Atelier Sulphurpool {rsthemes}&quot;  
+# [16] &quot;base16 Bespin {rsthemes}&quot;               
+# [17] &quot;base16 Brewer {rsthemes}&quot;               
+# [18] &quot;base16 Bright {rsthemes}&quot;               
+# [19] &quot;base16 Chalk {rsthemes}&quot;                
+# [20] &quot;base16 Codeschool {rsthemes}&quot;           
+# [21] &quot;base16 Cupcake {rsthemes}&quot;              
+# [22] &quot;base16 Darktooth {rsthemes}&quot;            
+# [23] &quot;base16 Default Dark {rsthemes}&quot;         
+# [24] &quot;base16 Default Light {rsthemes}&quot;        
+# [25] &quot;base16 Dracula {rsthemes}&quot;              
+# [26] &quot;base16 Eighties {rsthemes}&quot;             
+# [27] &quot;base16 Embers {rsthemes}&quot;               
+# [28] &quot;base16 Flat {rsthemes}&quot;                 
+# [29] &quot;base16 Google Dark {rsthemes}&quot;          
+# [30] &quot;base16 Google Light {rsthemes}&quot;         
+# [31] &quot;base16 Grayscale Dark {rsthemes}&quot;       
+# [32] &quot;base16 Grayscale Light {rsthemes}&quot;      
+# [33] &quot;base16 Green Screen {rsthemes}&quot;         
+# [34] &quot;base16 Gruvbox dark, hard {rsthemes}&quot;   
+# [35] &quot;base16 Gruvbox dark, medium {rsthemes}&quot; 
+# [36] &quot;base16 Gruvbox dark, pale {rsthemes}&quot;   
+# [37] &quot;base16 Gruvbox dark, soft {rsthemes}&quot;   
+# [38] &quot;base16 Gruvbox light, hard {rsthemes}&quot;  
+# [39] &quot;base16 Gruvbox light, medium {rsthemes}&quot;
+# [40] &quot;base16 Gruvbox light, soft {rsthemes}&quot;  
+# [41] &quot;base16 Harmonic16 Dark {rsthemes}&quot;      
+# [42] &quot;base16 Harmonic16 Light {rsthemes}&quot;     
+# [43] &quot;base16 Hopscotch {rsthemes}&quot;            
+# [44] &quot;base16 IR Black {rsthemes}&quot;             
+# [45] &quot;base16 Isotope {rsthemes}&quot;              
+# [46] &quot;base16 London Tube {rsthemes}&quot;          
+# [47] &quot;base16 Macintosh {rsthemes}&quot;            
+# [48] &quot;base16 Marrakesh {rsthemes}&quot;            
+# [49] &quot;base16 Materia {rsthemes}&quot;              
+# [50] &quot;base16 Mexico Light {rsthemes}&quot;         
+# [51] &quot;base16 Mocha {rsthemes}&quot;                
+# [52] &quot;base16 Monokai {rsthemes}&quot;              
+# [53] &quot;base16 Nord {rsthemes}&quot;                 
+# [54] &quot;base16 Ocean {rsthemes}&quot;                
+# [55] &quot;base16 OceanicNext {rsthemes}&quot;          
+# [56] &quot;base16 OneDark {rsthemes}&quot;              
+# [57] &quot;base16 Paraiso {rsthemes}&quot;              
+# [58] &quot;base16 PhD {rsthemes}&quot;                  
+# [59] &quot;base16 Pico {rsthemes}&quot;                 
+# [60] &quot;base16 Pop {rsthemes}&quot;                  
+# [61] &quot;base16 Railscasts {rsthemes}&quot;           
+# [62] &quot;base16 Rebecca {rsthemes}&quot;              
+# [63] &quot;base16 Seti UI {rsthemes}&quot;              
+# [64] &quot;base16 Shapeshifter {rsthemes}&quot;         
+# [65] &quot;base16 Solar Flare {rsthemes}&quot;          
+# [66] &quot;base16 Solarized Dark {rsthemes}&quot;       
+# [67] &quot;base16 Solarized Light {rsthemes}&quot;      
+# [68] &quot;base16 Spacemacs {rsthemes}&quot;            
+# [69] &quot;base16 Summerfruit Dark {rsthemes}&quot;     
+# [70] &quot;base16 Summerfruit Light {rsthemes}&quot;    
+# [71] &quot;base16 Tomorrow Night {rsthemes}&quot;       
+# [72] &quot;base16 Tomorrow {rsthemes}&quot;             
+# [73] &quot;base16 Twilight {rsthemes}&quot;             
+# [74] &quot;base16 Unikitty Dark {rsthemes}&quot;        
+# [75] &quot;base16 Unikitty Light {rsthemes}&quot;       
+# [76] &quot;base16 Woodland {rsthemes}&quot;             
+# [77] &quot;Fairyfloss {rsthemes}&quot;                  
+# [78] &quot;Flat White {rsthemes}&quot;                  
+# [79] &quot;GitHub {rsthemes}&quot;                      
+# [80] &quot;Nord Polar Night Aurora {rsthemes}&quot;     
+# [81] &quot;Nord Snow Storm {rsthemes}&quot;             
+# [82] &quot;Oceanic Plus {rsthemes}&quot;                
+# [83] &quot;One Dark {rsthemes}&quot;                    
+# [84] &quot;One Light {rsthemes}&quot;                   
+# [85] &quot;Solarized Dark {rsthemes}&quot;              
+# [86] &quot;Solarized Light {rsthemes}&quot;      </code></pre>
+<p> 다음의 함수를 통해 설치된 테마들을 하나씩 적용 할 수 있습니다.</p>
+<pre class="r"><code># 테마 적용하기 
+rsthemes::try_rsthemes()
+# light, dark, base16 themes를 선택적으로 적용하기 
+rsthemes::try_rsthemes(&quot;light&quot;)</code></pre>
+<p> <code>rstudioapi::applyTheme()</code>를 사용하면 목록의 테마를 하나씩 적용할 수 있습니다.</p>
+<pre class="r"><code># 특정 테마 적용하기 
+rstudioapi::applyTheme(&quot;One Dark {rsthemes}&quot;)</code></pre>
+</div>
+<div id="손-쉽게-테마-변경하기" class="section level2">
+<h2>손 쉽게 테마 변경하기</h2>
+<p> <a href="https://github.com/gadenbuie/rsthemes"><strong><code>rsthemes</code></strong></a>패키지가 가진 가장 큰 강점이 여기에 있습니다. 기호에 맞는 테마를 저장하고, 이를 단축키로 등록시켜 손 쉽게 테마를 전환시킬 수 있는 기능을 지원하는데요. 이 기능을 사용하기 위해선 먼저 자신이 선호하는 테마를 등록해야 합니다.</p>
+<div id="주-야간-테마" class="section level3">
+<h3>주-야간 테마</h3>
+<p> <code>rsthemes::set_theme_light()</code>, <code>rsthemes::set_theme_dark()</code>함수는 각각 밝은 테마, 어두운 테마 하나씩을 지정할 수 있습니다.</p>
+<pre class="r"><code># 현재 사용중인 테마를 주-야간 테마로 설정하기 
+rsthemes::set_theme_light()
+rsthemes::set_theme_dark()
+
+# 특정 테마를 주-야간 테마로 등록하기 
+rsthemes::set_theme_light(&quot;One Light {rsthemes}&quot;)
+rsthemes::set_theme_dark(&quot;One Dark {rsthemes}&quot;)</code></pre>
+</div>
+<div id="즐겨찾는-테마" class="section level3">
+<h3>즐겨찾는 테마</h3>
+<p> <code>rsthemes::set_theme_favorite()</code>함수를 통해 자신이 선호하는 테마 등록이 가능합니다.</p>
+<pre class="r"><code># 현재 사용중인 테마를 선호테마목록에 추가 
+rsthemes::set_theme_favorite()
+
+# 다수의 테마 선호테마목록에 추가 
+rsthemes::set_theme_favorite(
+  c(&quot;GitHub {rsthemes}&quot;, &quot;One Light {rsthemes}&quot;, &quot;One Dark {rsthemes}&quot;)
+)</code></pre>
+</div>
+<div id="기본-세션에-등록" class="section level3">
+<h3>기본 세션에 등록</h3>
+<p> 위의 함수들을 통해 선호하는 테마를 지정하였습니다. 하지만 이 설정은 오직 현재 세션에만 저장이 되기 때문에 만약 Rstudio를 종료 후 다시 키거나 혹은 새로운 세션으로 접속하면 사라질 정보입니다. 때문에 기본 세션에 등록을 시켜야지만 지속적으로 사용이 가능합니다. <code>usethis::edit_r_profile()</code>함수를 통해 <code>~/.Rprofile</code>을 편집하여 등록한 테마를 모든 세션에서 사용 가능하도록 설정합니다.</p>
+<pre class="r"><code># ~/.Rprofile
+if (interactive()) {
+  rsthemes::set_theme_light(&quot;GitHub {rsthemes}&quot;)
+  rsthemes::set_theme_dark(&quot;Fairyfloss {rsthemes}&quot;)
+  rsthemes::set_theme_favorite(
+    c(&quot;GitHub {rsthemes}&quot;, 
+      &quot;One Light {rsthemes}&quot;, 
+      &quot;One Dark {rsthemes}&quot;)
+  )
+}</code></pre>
+</div>
+<div id="단축키-등록" class="section level3">
+<h3>단축키 등록</h3>
+<p> <code>~/.Rprofile</code>파일에 테마를 등록하여 저장하면 세션이 종료되거나 바뀌어도 설정은 날아가지 않습니다. 이번엔 저장된 테마를 스위칭하는 단축키를 설정하는 방법에 대해 알아보겠습니다. <a href="https://github.com/gadenbuie/rsthemes"><strong><code>rsthemes</code></strong></a>패키지는 세가지 addins 기능을 지원합니다. <br></p>
+<ul>
+<li><strong>Toggle Dark Mode</strong> : 주-야간 테마</li>
+<li><strong>Favorite Themes</strong> : 즐겨찾는 테마</li>
+<li><strong>Auto Dark Mode</strong> : 주-야간 테마 지정된 시간에 자동 변경</li>
+</ul>
+<p>  addins에 들어가있는 기능들은 기본적으로 Rstudio의 단축키로 설정이 가능합니다. 이말인 즉슨 테마전환기능을 단축키로 지정해서 사용하는게 가능하다는 의미인데요. Rstudio의 단축키는 Tools &gt; Modify Keyboard shortcuts에서 설정 할 수 있습니다.</p>
+<p><img src="/post/2020-10-11-rsthemes_files/K-001-1.png" />
+<img src="/post/2020-10-11-rsthemes_files/K-20201013-102841.png" /></p>
+<p> 검색란에 ’toggle’만 타이핑해도 “Toggle Dark Mode”이 자동완성으로 등장합니다. 이곳에 원하는 단축키를 등록합니다. 저는 단축키로 “Ctrl+Alt+D”를 등록하였습니다.</p>
+<p><img src="/post/2020-10-11-rsthemes_files/K-20201013-104228.png" />
+<img src="/post/2020-10-11-rsthemes_files/K-20201013-104815.png" /></p>
+<p> 이후 설정한 단축키를 누르면 주-야간테마로 전환되는 것을 확인할 수 있을 겁니다. 즐겨찾는 테마의 단축키 등록도 이와 동일한 방식으로 등록이 가능하므로 똑같은 방식이니 추가적인 설명은 생략하고 넘어가도록 하겠습니다. (단축키로 “Ctrl+Alt+N”을 추천합니다.)</p>
+<p> addins의 마지막 기능인 <strong>Auto Dark Mode</strong>를 활성화하면 Rstudio가 정해진 시간에 맞춰서 주간테마, 야간테마를 자동으로 전환됩니다 직접 테마를 바꾸거나 단축키 등록을 하지 않더라도 이것만 설정하면 낮과 밤에 따라 테마를 변경시킬 수 있는데요. 이 기능은 단축키 등록이 아닌 아까 살펴봤던 <code>~/.Rprofile</code>의 수정을 통해 가능합니다. 콘솔창에 다시 한번 <code>usethis::edit_r_profile()</code>함수를 입력합니다.</p>
+<pre class="r"><code># ~/.Rprofile
+if (interactive()) {
+  rsthemes::set_theme_light(&quot;GitHub {rsthemes}&quot;)       # 주간 테마  
+  rsthemes::set_theme_dark(&quot;Fairyfloss {rsthemes}&quot;)    # 야간 테마  
+  rsthemes::set_theme_favorite(                        # 즐겨찾는 테마  
+    c(&quot;GitHub {rsthemes}&quot;, 
+      &quot;One Light {rsthemes}&quot;, 
+      &quot;One Dark {rsthemes}&quot;)
+  )
+  
+  # 주-야간 테마 지정된 시간에 자동 변경
+  setHook(&quot;rstudio.sessionInit&quot;, function(isNewSession) {
+    rsthemes::use_theme_auto(dark_start = as.POSIXct(&#39;17:00&#39;,format=&quot;%H:%M&quot;), dark_end = as.POSIXct(&#39;09:00&#39;,format=&quot;%H:%M&quot;))
+  }, action = &quot;append&quot;)
+}</code></pre>
+<p> <code>~/.Rprofile</code>에 <em>‘주-야간 테마 지정된 시간에 자동 변경’</em> 코드를 추가하였습니다. 만약 이와 같이 설정하면 17:00에 자동으로 야간테마로 전환되고, 다음날 09:00가 되면 주간 테마로 전환될 것입니다. 함수 내부에 <code>as.POSIXct()</code>값을 조정하여 테마가 전환되는 시간을 조정할 수 있습니다.</p>
+</div>
+</div>
+</div>
