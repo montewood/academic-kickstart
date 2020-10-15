@@ -20,7 +20,7 @@ projects: []
 
 ![](https://media.giphy.com/media/Ai6o3zm3NwvOazPxkm/giphy.gif){width=80%}
 
-&nbsp;데이터분석 혹은 R프로그래밍을 진행할 때 가장 많이 보는것이 (아마도) 구글, 스택오버플로우, 그리고 Rstudio일 것입니다.대다수의 R 유저들은 사용하는 IDE로서 **Rstudio**를 선호하는데요. 저 역시도 Rstudio에서 제공하는 각종 편의기능 덕분에 vscode와 같은 다른 IDE로 쉽사리 넘어가지 못하는것 같습니다. 그러나 오랜시간 비슷한 화면만을 보다보면 제아무리 만족스럽던 것도 점차 지루해지기 쉽상입니다. 이럴때 약간의 변화만 주어도 한결 나은 코딩을 할 수 있는데요. 오늘은 Rstudio에서 제공하는 기본테마를 벗어나 새롭고 다양한 테마를 제공할 뿐만아니라 테마변경을 손쉽게 하는 [**`rsthemes`**](https://github.com/gadenbuie/rsthemes) 패키지를 소개하고자 합니다.  
+&nbsp;데이터분석 혹은 R프로그래밍을 진행할 때 가장 많이 보는것이 (아마도) 구글, 스택오버플로우, 그리고 Rstudio일 것입니다.대다수의 R 유저들은 사용하는 IDE로서 **Rstudio**를 선호하는데요. 저 역시도 Rstudio에서 제공하는 각종 편의기능에 익숙해져 vscode와 같은 다른 IDE로 쉽사리 넘어가지 못하는것 같습니다. 그러나 오랜시간 비슷한 화면만을 보다보면 제아무리 만족스럽던 것도 점차 지루해지기 쉽상입니다. 이럴때 약간의 변화만 주어도 한결 나은 코딩을 할 수 있는데요. 오늘은 Rstudio에서 제공하는 기본테마를 벗어나 새롭고 다양한 테마를 제공할 뿐만아니라 테마변경을 손쉽게 하는 [**`rsthemes`**](https://github.com/gadenbuie/rsthemes) 패키지를 소개하고자 합니다.  
 
 # 기본 테마 변경   
 &nbsp;Rstudio를 처음 설치하면 4개의 패널로 나뉜 흰색의 기본 테마를 마주치게 됩니다. 기본 테마 역시 멋지지만 오랜시간 흰색의 배경을 응시하다보면 눈이 쉽사리 피로해지곤 하기때문에 많은 개발자들은 개발환경에 있어서 밝은것보다 어두운 테마를 더욱 선호하는것 같습니다. 먼저 기본적인 Rstudio의 테마의 변경은 상단의 Tools > Global Options > Appearence 탭을 통해 변경이 가능합니다. 
@@ -30,7 +30,7 @@ projects: []
 ![](/post/2020-10-11-rsthemes_files/K-20201011-162354.png)
 
 ![](/post/2020-10-11-rsthemes_files/K-20201011-162403.png)
-<center><em>기본테마변경</em></center>
+<center><em>기본 테마 변경 과정</em></center>
 
 # rsthemes package
 
@@ -207,7 +207,7 @@ if (interactive()) {
 - **Favorite Themes**   : 즐겨찾는 테마 
 - **Auto Dark Mode**    : 주-야간 테마 지정된 시간에 자동 변경 
 
-&nbsp; addins에 들어가있는 기능들은 기본적으로 Rstudio의 단축키로 설정이 가능합니다. 이말인 즉슨 테마전환기능을 단축키로 지정해서 사용하는게 가능하다는 의미인데요. Rstudio의 단축키는 Tools > Modify Keyboard shortcuts에서 설정 할 수 있습니다.  
+&nbsp; addins에 들어가있는 기능들은 기본적으로 Rstudio의 단축키로 설정이 가능합니다. 이 말인 즉슨 테마전환기능을 단축키로 지정해서 사용하는게 가능하다는 의미인데요. Rstudio의 단축키는 Tools > Modify Keyboard shortcuts에서 설정 할 수 있습니다.  
 
 ![](/post/2020-10-11-rsthemes_files/K-001-1.png)
 ![](/post/2020-10-11-rsthemes_files/K-20201013-102841.png)
@@ -241,8 +241,15 @@ if (interactive()) {
 
 &nbsp;`~/.Rprofile`에 *'주-야간 테마 지정된 시간에 자동 변경'* 코드를 추가하였습니다. 만약 이와 같이 설정하면 17:00에 자동으로 야간테마로 전환되고, 다음날 09:00가 되면 주간 테마로 전환될 것입니다. 함수 내부에 `as.POSIXct()`값을 조정하여 테마가 전환되는 시간을 조정할 수 있습니다. 
 
+___
 
+# 참고자료 
 
+- [Garrick Aden‑Buie Blog (rsthemes)](https://github.com/gadenbuie/rsthemes)
+
+```{r}
+##
+```
 
 
 
