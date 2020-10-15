@@ -133,8 +133,18 @@ str_split(regex_sentences, '\\b') # 문자의 바운더리를 기준으로 분�
 str_split(regex_sentences, '\\s') # 띄어쓰기를 기준으로 분절 
 ```
 
+___
 
+# 참고자료 
 
+- [Rstudio Regular Expression Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/regex.pdf)
+
+- [Rstudio Stringr Cheatsheets](https://github.com/rstudio/cheatsheets/blob/master/strings.pdf)
+
+- [R을 활용한 데이터과학 - 문자열](https://sulgik.github.io/r4ds/strings.html)
+```{r}
+##
+```
 
 
 

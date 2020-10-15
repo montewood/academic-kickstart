@@ -289,4 +289,37 @@ see('(?<!b)a') # 'a'가 'b' 바로 앞에 있지 않는 경우를 반환
 
 <https://regexone.com/>
 
+___
+
+# 참고자료 
+
+- [Microsoft Docs 정규식 구문](https://docs.microsoft.com/ko-kr/previous-versions/visualstudio/visual-studio-2010/ae5bf541(v=vs.100)?redirectedfrom=MSDN)
+
+- [Wikipedia 정규표현식](https://ko.wikipedia.org/wiki/%EC%A0%95%EA%B7%9C_%ED%91%9C%ED%98%84%EC%8B%9D)
+
+- [나무위키 정규표현식](https://namu.wiki/w/%EC%A0%95%EA%B7%9C%20%ED%91%9C%ED%98%84%EC%8B%9D?from=%EC%A0%95%EA%B7%9C%ED%91%9C%ED%98%84%EC%8B%9D)
+
+```{r}
+##
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
