@@ -25,7 +25,7 @@ projects: []
 
 
 <p><img src="/post/2020-10-02-regex_files/regular-expression.gif" class="center" /></p>
-<p> 문자형 데이터를 다루는데는 수 많은 기법들이 있습니다. R에서 제공하는 기본 함수들을 통해 처리하기도 하고, 텍스트처리에 특화된 패키지함수를 사용하여 원하는 처리를 하곤 하는데요. 오늘은 그 중에 텍스트데이터를 다루는데 효과적으로 사용되는 <strong>정규표현식</strong>을 사용하는 법에 대해 알아보도록 하겠습니다.</p>
+<p> 문자형 데이터를 다루는데는 수 많은 기법들이 있습니다. R에서 제공하는 기본 함수들을 통해 처리하기도 하고, 텍스트처리에 특화된 패키지함수를 사용하여 원하는 처리를 할 수 있는데요. 오늘은 그 중에 텍스트데이터를 다루는데 효과적으로 사용되는 <strong>정규표현식</strong>을 사용하는 법에 대해 알아보도록 하겠습니다.</p>
 <div id="정규표현식" class="section level1">
 <h1>정규표현식</h1>
 <p> <strong>정규표현식</strong>(regular expression)은 특정한 규칙을 가진 문자열의 집합을 표현하는데 사용하는 형식 언어입니다.
@@ -81,7 +81,7 @@ projects: []
 </div>
 <div id="section-5" class="section level3">
 <h3>6. “+”</h3>
-<p> <strong>+</strong>(더하기)는 앞 문자가 <strong>1개이상</strong> <span class="math inline">\((1 \geq )\)</span>인 경우를 의미합니다. <strong>+</strong> 기호의 좌측 문자를 기준으로 찾습니다.</p>
+<p> <strong>+</strong>(더하기)는 앞 문자가 <strong>1개이상</strong> <span class="math inline">\(( \geq 1)\)</span>인 경우를 의미합니다. <strong>+</strong> 기호의 좌측 문자를 기준으로 찾습니다.</p>
 <pre class="r"><code>see(&#39;a+&#39;)  # &#39;a&#39; 글자가 한개 이상 존재하는 경우  </code></pre>
 <div id="htmlwidget-6" style="width:960px;height:100%;" class="str_view html-widget"></div>
 <script type="application/json" data-for="htmlwidget-6">{"x":{"html":"<ul>\n  <li><span class='match'>a<\/span>bc ABC 123\t.!?\\(){}\n <span class='match'>a<\/span>bcde <span class='match'>aaa<\/span> b<span class='match'>a<\/span>c<span class='match'>a<\/span>d .<span class='match'>a<\/span>.<span class='match'>aa<\/span>.<span class='match'>aaa<\/span> <span class='match'>a<\/span>bb<span class='match'>aa<\/span>b <span class='match'>a<\/span>b<span class='match'>a<\/span>bcb<span class='match'>a<\/span>bcdcb<span class='match'>a<\/span>bcde<\/li>\n<\/ul>"},"evals":[],"jsHooks":[]}</script>
@@ -91,7 +91,7 @@ projects: []
 </div>
 <div id="section-6" class="section level3">
 <h3>7. "*"</h3>
-<p> <strong>* </strong>(곱하기)는 앞 문자가 <strong>0개이상</strong> <span class="math inline">\((0 \geq )\)</span>일 경우를 의미합니다.</p>
+<p> <strong>* </strong>(곱하기)는 앞 문자가 <strong>0개이상</strong> <span class="math inline">\(( \geq 0)\)</span>일 경우를 의미합니다.</p>
 <pre class="r"><code>see(&#39;a*&#39;) # &#39;a&#39; 글자를 반환 </code></pre>
 <div id="htmlwidget-8" style="width:960px;height:100%;" class="str_view html-widget"></div>
 <script type="application/json" data-for="htmlwidget-8">{"x":{"html":"<ul>\n  <li><span class='match'>a<\/span><span class='match'><\/span>b<span class='match'><\/span>c<span class='match'><\/span> <span class='match'><\/span>A<span class='match'><\/span>B<span class='match'><\/span>C<span class='match'><\/span> <span class='match'><\/span>1<span class='match'><\/span>2<span class='match'><\/span>3<span class='match'><\/span>\t<span class='match'><\/span>.<span class='match'><\/span>!<span class='match'><\/span>?<span class='match'><\/span>\\<span class='match'><\/span>(<span class='match'><\/span>)<span class='match'><\/span>{<span class='match'><\/span>}<span class='match'><\/span>\n<span class='match'><\/span> <span class='match'>a<\/span><span class='match'><\/span>b<span class='match'><\/span>c<span class='match'><\/span>d<span class='match'><\/span>e<span class='match'><\/span> <span class='match'>aaa<\/span><span class='match'><\/span> <span class='match'><\/span>b<span class='match'>a<\/span><span class='match'><\/span>c<span class='match'>a<\/span><span class='match'><\/span>d<span class='match'><\/span> <span class='match'><\/span>.<span class='match'>a<\/span><span class='match'><\/span>.<span class='match'>aa<\/span><span class='match'><\/span>.<span class='match'>aaa<\/span><span class='match'><\/span> <span class='match'>a<\/span><span class='match'><\/span>b<span class='match'><\/span>b<span class='match'>aa<\/span><span class='match'><\/span>b<span class='match'><\/span> <span class='match'>a<\/span><span class='match'><\/span>b<span class='match'>a<\/span><span class='match'><\/span>b<span class='match'><\/span>c<span class='match'><\/span>b<span class='match'>a<\/span><span class='match'><\/span>b<span class='match'><\/span>c<span class='match'><\/span>d<span class='match'><\/span>c<span class='match'><\/span>b<span class='match'>a<\/span><span class='match'><\/span>b<span class='match'><\/span>c<span class='match'><\/span>d<span class='match'><\/span>e<span class='match'><\/span><\/li>\n<\/ul>"},"evals":[],"jsHooks":[]}</script>
