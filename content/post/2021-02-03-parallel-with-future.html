@@ -1,0 +1,455 @@
+---
+title: '[R] 더욱 빠른 연산을 위한 병렬처리(With future Package)'
+author: JDW
+date: '2021-02-03'
+slug: parallel-with-future
+categories:
+  - R
+tags:
+  - R
+  - 비동기
+  - Async
+  - 병렬
+  - parallel
+  - future
+  - 속도
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-02-03T14:09:15+09:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+
+<img src="/post/parallel-with-future_files/IMAGEB~1.JPG" style="width:40.0%" />
+<center>
+<em>사진출처 : <a href="https://pixabay.com/users/mohamed_hassan-5229782/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=3042638">mohamed Hassan</a> from <a href="https://pixabay.com/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=3042638">Pixabay</a></em>
+</center>
+<p><br></p>
+<p> 계산할게 많은 코드를 돌릴때면 당연하게도 많은 시간을 소모하게 됩니다. 통계모델구축과 같이 연산량이 많은 작업을 돌리는 경우에 종종 이러한 상황을 맞닥들이곤 하는데요. 코드가 돌아가는 시간동안은 어쩔수 없이 하고있는 업무를 잠시 중단하거나 다른 일을 하는 수 밖에 없는 상황입니다. 이와 같은 시간이 아깝다고 생각이 드는건 지극히 정상적인 생각일 것입니다. 코드의 결과물이 빨리 나올수록 하고 있는 일을 더 빨리 끝내거나 혹은 그 시간에 더 많은 일을 할 수 있는데 말이죠. 오늘은 이러한 코드의 연산에 필요한 시간을 어쩌면 획기적으로 줄여줄수 있는 <strong><code>future</code></strong> 패키지에 대해 알아보겠습니다.</p>
+<div id="cpu" class="section level1">
+<h1>CPU</h1>
+<p> 설명하기에 앞서 여려분은 R을 어떠한 환경에서 사용하고 계신가요? 노트북 또는 데스크탑, 클라우드 환경 등 다양한 환경에서 R을 사용하고 계실겁니다. 저는 윈도우가 탑제된 노트북에서 R을 사용하고 있는데요. 제가 사용하고있는 노트북의 CPU는<a href="https://ark.intel.com/content/www/kr/ko/ark/products/134906/intel-core-i7-8750h-processor-9m-cache-up-to-4-10-ghz.html"><em>인텔® 코어™ i7-8750H 프로세서</em></a>로 헥사코어(6개의 코어)와 인텔의 하이퍼쓰레딩 기술이 적용된 제품을 사용하고 있습니다. CPU는 들어봤어도 헥사코어니 하이퍼쓰레딩이니하는 용어에 대해서 처음 들어보시는 분들도 계실겁니다. 저와 같은 <em>컴알못</em>(컴퓨터를 잘 알지 못하는)분들에게는 이런 생소한 용어 하나하나가 어려움으로 다가올텐데요. 먼저 이런 용어를 설명해야 하는점 미리 양해를 구하겠습니다. 뜬금없이 왜 이런 생소한 용어 설명을 하고있냐는 의문을 가질수도 있는데요. 그 이유는 이 후에 후술할 <strong>병렬처리</strong>를 이해하기 위해서는 이러한 부품들의 역할과 기능을 이해하고 있어야하기 때문입니다. 혹시나 이와같은 개념을 이미 알고 계신다면 넘어가셔도 상관 없습니다.</p>
+<div id="코어-쓰레드" class="section level2">
+<h2>코어 &amp; 쓰레드</h2>
+<p> 용어에 대한 설명을 진행하겠지만 본 포스트는 컴퓨터 용어에 대한 것이 아니기 때문에 최대한 간단하게 해보도록 하겠습니다. 먼저 컴퓨터의 두뇌라 할수있는 CPU에는 코어라는 것이 존재하는데 코어는 CPU에서 실질적으로 연산을 담당하는 장치입니다. 과거에는 CPU당 1개의 코어가 들어갔었으나 기술이 발전하면서 현재 출시되는 CPU에는 많게는 코어가 32개까지 들어가는 <em>멀티코어</em>로 구성되어 있습니다.</p>
+<p> 이러한 코어에는 쓰레드라는 개념이 존재하는데, 쓰레드는 코어에 할당된 작업 공간입니다. 즉, CPU 내부에서 일을 처리하는 최소의 단위이며 코어가 일을 하는 노동자라고 하면 쓰레드는 노동자가 동시에 할 수 있는 업무의 갯수라고 이해하면 될 것 같습니다.</p>
+<img src="/post/2021-02-03-parallel-with-future_files/cpu_core.png" style="width:65.0%" />
+<center>
+<em>CPU 내부 코어의 구성</em>
+</center>
+<p><br></p>
+<p> 예시로 든 이미지에 있는 CPU는 4개의 코어가 들어간 <em>쿼드코어</em> CPU로서 당연한 말이지만 2개의 코어를 지닌 <em>듀얼코어</em>나 <em>싱글코어</em>의 CPU보다 높은 성능을 낼 것입니다. 한편 인텔에는 <em>하이퍼쓰레딩</em>이라는 기술이 존재하는데 일반적으로 CPU의 코어는 코어당 하나의 쓰래드를 배분받아 일을 하게 되지만 해당 기술은 하나의 코어가 두 개의 쓰레드를 할당받아 마치 2개의 코어처럼 작동을 하는 것을 의미합니다. 즉, 헥사코어에 하이퍼쓰레드 기술을 지니고 있는 저의 노트북같은 경우는 동시에 연산처리를 할 수 있는 실질적인 코어가 총 12개가 있는 것이죠.</p>
+<img src="/post/2021-02-03-parallel-with-future_files/cpuz.png" style="width:50.0%" />
+<center>
+<em>“CPU-Z” 프로그램으로 알아본 CPU 정보 및 코어 &amp; 쓰레드 갯수</em>
+</center>
+<p><br></p>
+</div>
+</div>
+<div id="병렬처리와-비동기-프로그래밍" class="section level1">
+<h1>병렬처리와 비동기 프로그래밍</h1>
+<p> 한가지 상황을 상상해보죠. 오늘 저녁은 직접 요리를 해서 먹기로 마음 먹었습니다. 오늘은 집에서 갈비찜에 시금치 무침, 잡채, 그리고 김치볶음밥을 하기로 정했죠. 요리를 위한 재료구입과 다듬기를 마친 상황이고, 이제 한참 갈비찜을 만들고 있었습니다. 그런데 생각보다 갈비찜을 만드는데 시간이 많이 소요가 됩니다. 양념장에 재운 갈비를 끓여 익히기만 하면 되는데 그 시간이 한시간정도 걸린다고 합니다. 이럴경우 보통 어떻게 해야 할까요? 당연하게도 갈비를 익히는 시간동안 다른 잡채나 시금치 무침을 하면 됩니다.</p>
+<p> 그러던 와중에 집에서 요리한다는 소식을 접한 친구가 갑작스럽게 우리집에 방문한다고 합니다. 잘됐습니다. 공짜로 얻어먹으려는 친구를 부려서 같이 요리 하면 좋겠네요. 아마도 시간이 훨씬 단축될 것입니다. 원래라면 두 시간 걸릴 요리가 친구가 도와줌으로 인해서 한 시간 정도로 단축 될 것 같네요.</p>
+<p> 혼자 처리할 일을 친구와 같이 함으로서 시간이 단축되는 것 처럼 단일 프로세스에서 처리할 일을 여러 프로세스와 함께 처리하는 방식을 병렬처리라고 합니다. 그리고 일반적인 R 코드는 순차적으로 처리를 하지 동시에 처리하는것은 불가능합니다. 이를 위의 상황에 비유하자면 갈비찜과 잡채를 만들고 있는 상황에서 갈비찜이 완성되기 전까지는 잡채나 시금치 무침같은 다른 요리를 만드는 것에는 일절 손도 안대는 상황이라 할 수 있습니다. 이처럼 작업의 순서가 고정되어 있지 않고 주어진 일을 여건에 맞게 유기적으로 처리하는 방식을 비동기(Async) 방식이라 하며, 반대로 주어진 일을 순차적으로 처리하는 방식을 동기식(Sync)이라 합니다.</p>
+</div>
+<div id="future-package" class="section level1">
+<h1>future package</h1>
+<p> 동기식으로 처리되던 기존의 R 코드를 <strong><code>future</code></strong> 패키지를 사용한다면 효율적이고 그리고 손쉽게 병렬 처리 및 비동기 연산을 할 수 있습니다.</p>
+<div id="설치-및-기본-설정" class="section level2">
+<h2>설치 및 기본 설정</h2>
+<p> <strong><code>future</code></strong> 패키지는 cran에 정식으로 등록된 패키지이기 때문에 <code>install.packages()</code>함수를 사용하여 설치가 가능합니다.</p>
+<pre class="r"><code># install.packages(future)
+library(future)</code></pre>
+<p> 패키지를 설치하였다면 비동기 연산을 위한 설정을 별도로 진행해 줘야 합니다. <strong><code>future</code></strong> 패키지가 제공하는 <code>plan()</code> 함수는 코드 연산 방식을 동기식으로 할지 비동기식으로 할지 설정하도록 하는 함수입니다. 여기에 인자로 <code>multisession</code> 을 지정하면 <strong><code>future</code></strong> 패키지가 백그라운드에서 자동적으로 별도의 R 세션을 생성하고, 이후 병렬연산이 필요한 경우에 사용할 수 있습니다.</p>
+<pre class="r"><code>plan(multisession)</code></pre>
+<p> <code>plan()</code> 함수를 실행하면 현재 환경에서 사용 가능한 전체 CPU의 코어를 자동으로 탐지하여 이 갯수만큼의 R 세션을 생성하게 됩니다. 저의 노트북을 예시로 들면 12개의 세션을 백그라운드에서 생성하게 되죠. 만약 전체 CPU의 코어 사용이 부담스럽다면 <code>plan()</code> 함수가 제공하는 <code>workers</code> 옵션을 설정하면 원하는 만큼의 코어를 사용할 수 있습니다. 여기서는 8개의 코어만 사용해 보도록 하겠습니다.</p>
+<pre class="r"><code># 기본 설정 코어 갯수 &amp; 실행 가능한 최대 CPU 코어
+availableCores()</code></pre>
+<pre><code>## system 
+##     12</code></pre>
+<pre class="r"><code># 사용 코어 갯수 지정
+plan(multisession, workers = 8)</code></pre>
+<p> 이렇게 설정되어 만들어진 세션들은 (윈도우)작업관리자를 통해 확인할 수 있습니다. <code>plan()</code>함수를 통해 ‘R for Windows front-end’ 세션들이 새로이 생성된 것을 볼 수 있습니다.</p>
+<img src="/post/2021-02-03-parallel-with-future_files/future-newsession.png" />
+<center>
+<em>기본 세션(좌), <code>plan(multisession)</code>으로 생성된 백그라운드 세션(우)</em>
+<center>
+<p><br></p>
+</div>
+<div id="기본-용법" class="section level2">
+<h2>기본 용법</h2>
+<p> <strong><code>future</code></strong>패키지를 사용하는 방법에는 두가지 방식이 있습니다. 하나는 <code>future()</code> 함수를 명시적으로 사용하는 것이고 다른 하나는 패키지에서 제공하는 <code>%&lt;-%</code> 형태의 특수한 스니펫을 사용하여 퓨쳐를 암시적으로 지정하는 것입니다.<br />
+ 비교를 위해 임의의 함수 하나를 생성해서 사용해보도록 하겠습니다. <code>testFunc1()</code> 함수는 단순히 ’hi’라는 단어를 콘솔창에 출력한 뒤 3.14를 반환하는 함수입니다.</p>
+<pre class="r"><code>testFunc1 &lt;- function(){
+  cat(&#39;hi&#39;)
+  3.14
+}</code></pre>
+<p> 그런다음 <strong><code>future</code></strong>의 명시적 용법과 암시적 용법을 각각 사용하여 <code>testFunc1()</code> 함수를 출력해보도록 하겠습니다. 두 방식 모두 이전에 설정한 <code>plan(multisession)</code> 함수를 통해 비동기 방식을 설정한 상태이며, 이를 통해 연산이 현재의 R studio 세션에서 진행되는 것이 아닌 백그라운드 세션에서 이루어집니다.</p>
+<pre class="r"><code># 명시적 용법 
+f1 &lt;- future({
+  testFunc1()
+})
+
+# 암시적 용법 
+f2 %&lt;-% {
+  testFunc1()
+}</code></pre>
+<pre class="r"><code>f1</code></pre>
+<pre><code>## MultisessionFuture:
+## Label: &#39;&lt;none&gt;&#39;
+## Expression:
+## {
+##     testFunc1()
+## }
+## Lazy evaluation: FALSE
+## Asynchronous evaluation: TRUE
+## Local evaluation: TRUE
+## Environment: R_GlobalEnv
+## Capture standard output: TRUE
+## Capture condition classes: &#39;condition&#39;
+## Globals: 1 objects totaling 5.21 KiB (function &#39;testFunc1&#39; of 5.21 KiB)
+## Packages: &lt;none&gt;
+## L&#39;Ecuyer-CMRG RNG seed: &lt;none&gt; (seed = FALSE)
+## Resolved: TRUE
+## Value: &lt;not collected&gt;
+## Conditions captured: &lt;none&gt;
+## Early signaling: FALSE
+## Owner process: 0a05099d-e988-7d64-9a2b-264a0bf864f3
+## Class: &#39;MultisessionFuture&#39;, &#39;ClusterFuture&#39;, &#39;MultiprocessFuture&#39;, &#39;Future&#39;, &#39;environment&#39;</code></pre>
+<pre class="r"><code>f2</code></pre>
+<pre><code>## hi</code></pre>
+<pre><code>## [1] 3.14</code></pre>
+<p> 암시적 용법을 사용한 <code>f2</code> 의 경우 <code>testFunc1()</code> 함수의 output을 정상적으로 출력하였지만 명시적 용법을 사용한 <code>f1</code> 객체의 경우는 다소 알기 어려운 메세지만을 출력하였습니다. <strong><code>future</code></strong> 패키지에서 명시적 용법과 암시적 용법은 기본적으로 같은 기능을 수행하지만 명시적 용법을 사용하는 경우 값을 반환받기 위해서는 <code>value()</code> 함수를 통해 반환을 받습니다.</p>
+<pre class="r"><code>value(f1)</code></pre>
+<pre><code>## hi</code></pre>
+<pre><code>## [1] 3.14</code></pre>
+<p> <code>value()</code> 함수를 사용하니 <code>f1</code> 객체 역시 <code>f2</code> 와 동일한 값을 반환합니다. 이처럼 명시적 용법을 사용한 퓨쳐에서는 값을 반환받기 위해 <code>value()</code> 함수를 사용해야 하며, 간결하게 사용하고 싶은 경우에는 암시적 용법인 <code>%&lt;-%</code> 스니펫을 사용하면 됩니다.</p>
+</div>
+<div id="활용" class="section level2">
+<h2>활용</h2>
+<p>  지금까지 <strong><code>future</code></strong> 패키지의 설치와 기본적인 사용법에 대해서 알아보았습니다. 그렇다면 어떠한 상황 혹은 어떠한 목적을 위하여 이것을 사용해야 할까요? 여러가지 상황이 존재하겠지만 제가 생각하기에 <strong><code>future</code></strong> 패키지를 알맞게 사용하는 상황은 크게 두 가지 인 것 같습니다.</p>
+<div id="연산을-다른-세션에-위임할-때" class="section level3">
+<h3>1) 연산을 다른 세션에 위임할 때</h3>
+<p> 맨 처음 말한것처럼 연산량이 많은 코드를 돌릴 경우 코드가 온전히 돌아갈때 까지 기다려야 하는 상황이 발생합니다. 갈비찜이 완성되기 전까지는 아무런 동작도 하지 않는셈이죠. 이럴때 <strong><code>future</code></strong> 패키지를 사용하면 현재 작업하고 있는 세션에 방해되지 않게 코드를 돌릴 수가 있습니다.</p>
+<pre class="r"><code>testFunc2 &lt;- function(x){
+  Sys.sleep(x)
+  return(print(&#39;Done!&#39;))
+}</code></pre>
+<p> 시범을 위해 역시 임의의 함수를 생성하도록 하겠습니다. <code>testFunc2()</code> 함수는 지정한 <code>x</code>초 만큼 동작을 멈추었다가 마지막에 <code>print('Done!')</code>을 수행하는 함수입니다. 즉, <code>x</code>초간 <em>멈추는 동작을 수행</em> 한 뒤 ’Done!’이란 글자를 출력하는 함수이죠. 이를 계산이 오래 걸리는 함수라고 가정하고 다른 세션에 위임하여 10초동안 돌려보도록 하겠습니다.</p>
+<pre class="r"><code># 다른 세션에서 연산하도록 위임 
+t1 &lt;- future({
+  testFunc2(10)
+})
+
+# 결과 출력 
+value(t1)</code></pre>
+<pre><code>## [1] &quot;Done!&quot;</code></pre>
+<p> <strong><code>future</code></strong> 패키지를 통해 연산을 다른 세션에 위임한다는 사실을 알게 되었습니다. 그런데 다른 세션에서 작업이 완료가 되었는지 확인은 어떻게 해야할까요? 현재 세션에서 코드를 돌린다면 코드의 연산이 끝날 시 콘솔창에 즉각 출력이되어 코드의 수행 여부를 즉각 확인할 수 있을 것입니다. 그렇지만 다른 세션에서 돌아간 코드는 연산이 끝나더라도 현재 세션에 아무런 영향을 주지 않기 때문에 이를 확인할 방도가 없습니다.<br />
+<br>
+ 이러한 상황을 대비하여 <strong><code>future</code></strong> 패키지는 <code>resolved()</code> 함수를 제공하고 있습니다.</p>
+<pre class="r"><code># 다른 세션에 연산 위임 
+t2 &lt;- future({
+  testFunc2(10)
+})
+
+# 연산 확인 
+i = 0
+while(T){
+    cat(paste0(i, &#39; now running \n&#39;))
+    Sys.sleep(1)
+    i = i + 1
+    if(resolved(t2)){
+        cat(&#39;Calculate done! \n&#39;)
+        break
+    }
+}
+
+# 결과 출력 
+value(t1)</code></pre>
+<pre><code>## 0 now running 
+## 1 now running 
+## 2 now running 
+## 3 now running 
+## 4 now running 
+## 5 now running 
+## 6 now running 
+## 7 now running 
+## Calculate done! 
+## [1] &quot;Done!&quot;</code></pre>
+<p> <code>t2</code> 객체가 현재 연산중인지를 확인하기 위하여 중간에 <code>while</code> 문을 추가하였습니다. <code>while</code> 문의 기능은 1초 간격으로 동작을 멈추었다가 “<code>i</code> now running”을 출력하는 코드인데 중간에 있는 <code>if</code> 문에 <code>resolved(t2)</code> 함수가 있는 것을 볼 수 있습니다. <code>resolved()</code> 함수의 기능은 백그라운드 세션에서 연산중인 퓨쳐가 동작하는지를 확인하기 위한 함수로서 만약 해당 퓨쳐가 연산중에 있으면 <code>FALSE</code> 를, 연산을 마쳤다면 <code>TRUE</code> 를 반환하게 됩니다. 따라서 <code>t2</code> 객체에 지정된 퓨쳐가 백그라운드 세션에서 연산중이면 “<code>i</code> now running” 출력과 1초 간격으로 동작을 멈추는 작동을 수행하고, 연산이 끝난경우 <code>if</code> 문 내부의 <code>break</code> 를 통해 <code>while</code> 문이 종료가 되는 것입니다. 이와 같은 방법을 응용한다면 백그라운드에서 실행중인 비동기 연산의 수행완료 여부를 효율적으로 인지할 수 있을 것입니다.</p>
+</div>
+<div id="더욱-빠른-연산이-필요로-할-때" class="section level3">
+<h3>2) 더욱 빠른 연산이 필요로 할 때</h3>
+<div id="파일-읽기-속도-비교" class="section level4">
+<h4>2-1) 파일 읽기 속도 비교</h4>
+<p> 두 번째 경우는 연산속도를 높이고 싶은 상황에 사용하는 것입니다. <strong><code>future</code></strong> 패키지가 지원하는 병렬연산을 적극 사용하는 방식인데 속도의 비교를 위해 테스트용 데이터를 생성해 보도록 하겠습니다.</p>
+<pre class="r"><code># 테스트용 csv 저장
+library(dplyr)
+data.frame(
+    t1 = rnorm(10000),
+    t2 = rnorm(10000),
+    t3 = rnorm(10000)
+) %&gt;% write.csv(., &#39;testFile.csv&#39;)</code></pre>
+<p>  정규분포를 따르는 난수를 생성하는 <code>rnorm()</code>함수를 사용하여 3개의 column과 10000개의 row를 지니고 있는 임의의 데이터프레임을 생성하였고, 이를 csv파일로 저장하였습니다. R 에서 제공하는 다양한 반복 처리 기법들을 사용하여 생성한 csv파일을 각각 500번씩 읽어들이는데 소요된 속도를 <code>system.time()</code> 함수를 사용하여 비교해보도록 하겠습니다.</p>
+<pre class="r"><code># 테스트 결과 리스트에 저장
+speed_result &lt;- list()
+speed_result &lt;- list(
+    # for문
+    forLoop = system.time({
+        for(i in 1:500){
+            read.csv(&#39;testFile.csv&#39;)
+        }
+    }),
+
+    # lapply문
+    lapply = system.time({
+        lapply(1:500, function(x){
+            read.csv(&#39;testFile.csv&#39;)
+        })
+    }),
+
+    # sapply문
+    sapply = system.time({
+        sapply(1:500, function(x){
+            read.csv(&#39;testFile.csv&#39;)
+        })
+    }),
+
+    # purrr::map문
+    map = system.time({
+        purrr::map(1:500, function(x){
+            read.csv(&#39;testFile.csv&#39;)
+        })
+    }),
+
+    # future문
+    future = system.time({
+        future({
+            lapply(1:500, function(x){
+                read.csv(&#39;testFile.csv&#39;)
+            })
+        }) %&gt;% value()
+    })
+)
+
+speed_result</code></pre>
+<pre><code>## $forLoop
+##  사용자  시스템 elapsed 
+##   16.03    0.31   16.43 
+## 
+## $lapply
+##  사용자  시스템 elapsed 
+##   17.22    0.36   17.63 
+## 
+## $sapply
+##  사용자  시스템 elapsed 
+##   16.19    0.41   16.61 
+## 
+## $map
+##  사용자  시스템 elapsed 
+##   15.72    0.31   16.07 
+## 
+## $future
+##  사용자  시스템 elapsed 
+##    0.05    0.10   16.48</code></pre>
+<p>  <strong><code>future</code></strong> 패키지를 사용하였음에도 불구하고 예상한것과 달리 속도 개선이 그리 와닿지 않습니다. 다른 기법들과 속도가 비슷하거나 <code>purrr::map()</code> 함수와 비교해보면 되려 속도가 느린 것을 볼 수 있습니다. 여기서 한가지 더 짚고 넘어가야 할 점이라면 <strong><code>future</code></strong> 패키지를 통해 속도개선을 위한다면 다음의 패키지들을 추가적으로 설치하여 사용하는 것을 추천합니다.</p>
+<pre class="r"><code>install.packages(&#39;future.apply&#39;)
+install.packages(&#39;furrr&#39;)</code></pre>
+<p>  <strong><code>future</code></strong> 패키지의 확장 패키지들인 <strong><code>future.apply</code></strong>, <strong><code>furrr</code></strong> 패키지는 병렬 환경에서 각각 <code>apply</code>문과 <code>purrr</code>패키지의 함수를 대체하여 사용할 수 있는 <code>future.apply::future_apply()</code> 또는 <code>furrr::future_map()</code> 등의 함수를 제공하고 있습니다.</p>
+<pre class="r"><code># future_lapply 속도 측정 
+library(future.apply)
+list(
+  future_apply = system.time({
+    future_lapply(1:500, function(x){read.csv(&#39;testFile.csv&#39;)})
+  })
+)</code></pre>
+<pre><code>## $future_apply
+##  사용자  시스템 elapsed 
+##    0.45    0.16    4.75</code></pre>
+<pre class="r"><code># future_map 속도 측정 
+library(furrr)
+list(
+  future_map = system.time({
+    future_map(1:500, function(x){read.csv(&#39;testFile.csv&#39;)})
+  })
+)</code></pre>
+<pre><code>## $future_map
+##  사용자  시스템 elapsed 
+##    0.14    0.11    4.87</code></pre>
+<p> <code>future()</code> 함수의 속도 대비 훨신 빠른 성능을 보인 것을 확인할 수 있습니다.</p>
+</div>
+<div id="모델링-속도-비교" class="section level4">
+<h4>2-1) 모델링 속도 비교</h4>
+<p> 이번에는 실제 모델링에서의 연산속도는 어떠할지 측정해 보도록 하겠습니다. 시계열분석 예제 데이터로 많이 활용되는 <code>AirPassengers</code> 데이터에 난수를 더하여 만든 50개의 시계열 데이터에 각각 ARIMA모형을 구축하고, 각 방법마다 모델링에 걸리는 시간을 측정 및 비교해 보도록 하겠습니다. 이번에도 역시 다른 일반적인 기법들과의 비교를 통해 속도 측정을 진행해 보도록 하죠.</p>
+<pre class="r"><code>library(forecast)
+
+# 속도 측정용 데이터 생성 
+test_range &lt;- 1:50
+testdata &lt;- lapply(test_range, function(x){
+    AirPassengers + sample(144)
+}) %&gt;%
+    as.data.frame() %&gt;%
+    rename_with(~paste0(&#39;air&#39;, test_range))
+
+glimpse(testdata)</code></pre>
+<pre><code>## Rows: 144
+## Columns: 50
+## $ air1  &lt;dbl&gt; 123, 254, 250, 181, 198, 246, 167, 257, 164, 168, 166, 230, 1...
+## $ air2  &lt;dbl&gt; 154, 158, 220, 146, 183, 277, 186, 215, 239, 223, 119, 208, 2...
+## $ air3  &lt;dbl&gt; 172, 239, 173, 267, 200, 277, 238, 167, 275, 212, 107, 258, 2...
+## $ air4  &lt;dbl&gt; 239, 240, 260, 260, 209, 274, 220, 218, 141, 149, 166, 231, 2...
+## $ air5  &lt;dbl&gt; 185, 218, 276, 191, 251, 143, 216, 172, 268, 157, 151, 208, 2...
+## $ air6  &lt;dbl&gt; 224, 163, 198, 172, 130, 275, 282, 230, 143, 149, 176, 213, 1...
+## $ air7  &lt;dbl&gt; 229, 214, 241, 258, 231, 238, 238, 216, 255, 151, 154, 138, 1...
+## $ air8  &lt;dbl&gt; 234, 158, 218, 198, 209, 259, 215, 196, 148, 161, 208, 246, 1...
+## $ air9  &lt;dbl&gt; 222, 251, 230, 202, 262, 236, 200, 231, 184, 176, 239, 227, 1...
+## $ air10 &lt;dbl&gt; 255, 148, 160, 258, 240, 168, 234, 192, 212, 216, 205, 209, 2...
+## $ air11 &lt;dbl&gt; 247, 195, 136, 197, 154, 165, 254, 160, 265, 141, 224, 196, 1...
+## $ air12 &lt;dbl&gt; 229, 126, 271, 188, 256, 210, 260, 257, 148, 193, 122, 201, 1...
+## $ air13 &lt;dbl&gt; 217, 151, 272, 248, 224, 201, 195, 218, 226, 173, 199, 203, 1...
+## $ air14 &lt;dbl&gt; 138, 248, 255, 180, 197, 262, 269, 159, 198, 204, 181, 174, 1...
+## $ air15 &lt;dbl&gt; 184, 205, 156, 149, 223, 278, 223, 283, 194, 201, 108, 243, 2...
+## $ air16 &lt;dbl&gt; 246, 134, 252, 187, 125, 195, 186, 240, 199, 220, 150, 183, 1...
+## $ air17 &lt;dbl&gt; 118, 178, 242, 138, 187, 178, 266, 271, 207, 245, 195, 163, 1...
+## $ air18 &lt;dbl&gt; 160, 133, 262, 248, 191, 147, 223, 171, 190, 166, 248, 249, 1...
+## $ air19 &lt;dbl&gt; 179, 222, 234, 208, 230, 234, 277, 240, 212, 171, 185, 205, 2...
+## $ air20 &lt;dbl&gt; 210, 207, 191, 183, 242, 270, 264, 238, 274, 205, 148, 170, 1...
+## $ air21 &lt;dbl&gt; 189, 166, 175, 193, 180, 192, 290, 181, 172, 168, 203, 122, 1...
+## $ air22 &lt;dbl&gt; 177, 177, 180, 257, 129, 247, 170, 202, 208, 252, 234, 143, 1...
+## $ air23 &lt;dbl&gt; 182, 128, 201, 183, 161, 228, 162, 198, 264, 245, 245, 120, 1...
+## $ air24 &lt;dbl&gt; 182, 223, 256, 225, 147, 208, 172, 251, 179, 214, 135, 210, 1...
+## $ air25 &lt;dbl&gt; 251, 199, 194, 131, 162, 242, 249, 179, 146, 209, 248, 247, 1...
+## $ air26 &lt;dbl&gt; 178, 237, 222, 209, 176, 276, 212, 192, 143, 193, 150, 248, 2...
+## $ air27 &lt;dbl&gt; 199, 262, 212, 177, 231, 265, 279, 150, 247, 219, 160, 168, 2...
+## $ air28 &lt;dbl&gt; 123, 189, 174, 204, 252, 272, 209, 267, 194, 230, 216, 212, 2...
+## $ air29 &lt;dbl&gt; 186, 156, 159, 162, 243, 140, 150, 239, 203, 219, 151, 152, 2...
+## $ air30 &lt;dbl&gt; 250, 134, 225, 174, 152, 152, 222, 260, 270, 208, 239, 245, 2...
+## $ air31 &lt;dbl&gt; 149, 142, 268, 176, 247, 148, 183, 292, 191, 233, 112, 170, 2...
+## $ air32 &lt;dbl&gt; 186, 130, 220, 260, 176, 269, 177, 220, 144, 141, 191, 132, 1...
+## $ air33 &lt;dbl&gt; 231, 218, 194, 251, 260, 182, 268, 254, 223, 162, 157, 177, 2...
+## $ air34 &lt;dbl&gt; 181, 173, 258, 239, 173, 221, 153, 276, 166, 237, 143, 142, 1...
+## $ air35 &lt;dbl&gt; 149, 182, 197, 233, 197, 270, 217, 282, 265, 185, 178, 260, 1...
+## $ air36 &lt;dbl&gt; 153, 141, 233, 150, 262, 154, 270, 199, 168, 120, 224, 148, 1...
+## $ air37 &lt;dbl&gt; 152, 144, 141, 253, 253, 238, 161, 276, 140, 173, 184, 219, 2...
+## $ air38 &lt;dbl&gt; 126, 119, 252, 186, 143, 138, 226, 174, 220, 165, 215, 253, 2...
+## $ air39 &lt;dbl&gt; 232, 262, 164, 187, 170, 189, 165, 163, 139, 121, 184, 160, 1...
+## $ air40 &lt;dbl&gt; 117, 207, 230, 204, 199, 203, 187, 184, 253, 189, 145, 141, 2...
+## $ air41 &lt;dbl&gt; 154, 182, 215, 160, 252, 167, 251, 197, 160, 206, 109, 198, 2...
+## $ air42 &lt;dbl&gt; 250, 253, 229, 236, 152, 233, 241, 197, 228, 255, 191, 260, 1...
+## $ air43 &lt;dbl&gt; 116, 216, 153, 203, 140, 138, 234, 285, 275, 214, 203, 166, 2...
+## $ air44 &lt;dbl&gt; 208, 153, 227, 188, 197, 219, 157, 214, 280, 252, 189, 158, 1...
+## $ air45 &lt;dbl&gt; 166, 176, 194, 143, 186, 253, 165, 260, 231, 132, 223, 170, 1...
+## $ air46 &lt;dbl&gt; 127, 148, 263, 157, 263, 225, 197, 250, 237, 130, 174, 128, 1...
+## $ air47 &lt;dbl&gt; 130, 181, 259, 234, 130, 277, 210, 272, 187, 202, 116, 193, 1...
+## $ air48 &lt;dbl&gt; 204, 217, 263, 183, 256, 179, 215, 204, 243, 183, 157, 244, 2...
+## $ air49 &lt;dbl&gt; 202, 167, 218, 205, 140, 216, 176, 160, 147, 169, 169, 241, 2...
+## $ air50 &lt;dbl&gt; 171, 202, 157, 214, 179, 237, 243, 253, 211, 135, 173, 128, 1...</code></pre>
+<pre class="r"><code># 시계열 데이터 변환 
+testdata &lt;- testdata %&gt;% ts(frequency = 12, start = 1949)</code></pre>
+<pre class="r"><code># 모델링 속도 비교 
+modeling_speed_test &lt;- list()
+modeling_speed_test &lt;- list(
+    # For문
+    forLoop = system.time({
+        for(i in seq(1, ncol(testdata))){
+            testdata[, i] %&gt;% auto.arima()
+        }
+    }),
+    
+    # lapply문
+    lapply = system.time({
+        testdata %&gt;% lapply(auto.arima)
+    }),
+    
+    # sapply문
+    sapply = system.time({
+        testdata %&gt;% sapply(auto.arima)
+    }),
+    
+    # `future` For문
+    future_forLoop = system.time({
+        for(i in seq(1, ncol(testdata))){
+            future({
+                testdata[, i] %&gt;% auto.arima()
+            })
+        }
+    }),
+    
+    # future_lapply문
+    future_lapply = system.time({
+        testdata %&gt;% future_lapply(auto.arima)
+    }),
+    
+    # future_map문
+    future_map = system.time({
+        testdata %&gt;% future_map(auto.arima)
+    }), 
+    
+    #apply문 
+    apply = system.time({
+        testdata %&gt;% apply(2, auto.arima)
+    }),
+    
+    #future_apply문 
+    future_apply = system.time({
+        testdata %&gt;% future_apply(2, auto.arima)
+    })
+)
+
+modeling_speed_test</code></pre>
+<pre><code>## $forLoop
+##  사용자  시스템 elapsed 
+##  239.64    2.92  246.25 
+## 
+## $lapply
+##  사용자  시스템 elapsed 
+##  235.01    2.44  241.47 
+## 
+## $sapply
+##  사용자  시스템 elapsed 
+##  238.92    1.80  244.18 
+## 
+## $future_forLoop
+##  사용자  시스템 elapsed 
+##    0.69    0.05   61.49 
+## 
+## $future_lapply
+##  사용자  시스템 elapsed 
+##    0.86    0.01   83.05 
+## 
+## $future_map
+##  사용자  시스템 elapsed 
+##    0.69    0.03    4.04 
+## 
+## $apply
+##  사용자  시스템 elapsed 
+##    5.95    0.02    6.11 
+## 
+## $future_apply
+##  사용자  시스템 elapsed 
+##    0.47    0.01    1.91</code></pre>
+<p> 50번의 ARIMA모델을 <code>sapply()</code>함수가 274초에 걸쳐 처리한것에 반면 <code>future_apply()</code>함수는 2초가 안되는 시간에 처리한것을 확인할 수 있습니다. 이와 같이 <strong><code>future</code></strong> 패키지를 통해 비동기 및 병렬연산을 적절히 활용한다면 더욱 효율적인 R 프로그래밍을 할 수 있습니다.</p>
+<hr />
+</div>
+</div>
+</div>
+</div>
+<div id="참고자료" class="section level1">
+<h1>참고자료</h1>
+<ul>
+<li><p><a href="https://github.com/HenrikBengtsson/future">https://github.com/HenrikBengtsson/future</a></p></li>
+<li><p><a href="https://github.com/HenrikBengtsson/future.apply">https://github.com/HenrikBengtsson/future.apply</a></p></li>
+<li><p><a href="https://github.com/DavisVaughan/furrr">https://github.com/DavisVaughan/furrr</a></p></li>
+<li><p><a href="https://lumiamitie.github.io/r/radv-wk1-future/">비동기 프로그래밍 WITH FUTURE (R-ADV WEEK1)</a></p></li>
+<li><p><a href="https://www.jottr.org/2020/12/19/future-eurobioc2020-slides/">My Keynote ‘Future’ Presentation at the European Bioconductor Meeting 2020</a></p></li>
+<li><p><a href="https://cran.r-project.org/web/packages/promises/vignettes/futures.html">https://cran.r-project.org/web/packages/promises/vignettes/futures.html</a></p></li>
+</ul>
+<pre class="r"><code>##</code></pre>
+</div>
