@@ -67,7 +67,7 @@ projects: []
 <p> <strong><code>future</code></strong> 패키지는 cran에 정식으로 등록된 패키지이기 때문에 <code>install.packages()</code>함수를 사용하여 설치가 가능합니다.</p>
 <pre class="r"><code># install.packages(future)
 library(future)</code></pre>
-<p> 패키지를 설치하였다면 비동기 연산을 위한 설정을 별도로 진행해 줘야 합니다. <strong><code>future</code></strong> 패키지가 제공하는 <code>plan()</code> 함수는 코드 연산 방식을 동기식으로 할지 비동기식으로 할지 설정하도록 하는 함수입니다. 여기에 인자로 <code>multisession</code> 을 지정하면 <strong><code>future</code></strong> 패키지가 백그라운드에서 자동적으로 별도의 R 세션을 생성하고, 이후 병렬연산이 필요한 경우에 사용할 수 있습니다.</p>
+<p> 패키지를 설치하였다면 비동기 연산을 위한 설정을 별도로 진행해 줘야 합니다. <strong><code>future</code></strong> 패키지가 제공하는 <code>plan()</code> 함수는 코드 연산 방식을 동기식으로 할지 비동기식으로 할지 설정하도록 하는 함수입니다. 여기에 인자로 <code>multisession</code> 을 지정하면 <strong><code>future</code></strong> 패키지가 백그라운드에서 자동적으로 별도의 R 세션을 생성하고, 이후 병렬연산이 필요한 경우에 사용할 수 있습니다. (MAC 이용자의 경우 <code>plan(multicore)</code>로 설정하시면 됩니다.)</p>
 <pre class="r"><code>plan(multisession)</code></pre>
 <p> <code>plan()</code> 함수를 실행하면 현재 환경에서 사용 가능한 전체 CPU의 코어를 자동으로 탐지하여 이 갯수만큼의 R 세션을 생성하게 됩니다. 저의 노트북을 예시로 들면 12개의 세션을 백그라운드에서 생성하게 되죠. 만약 전체 CPU의 코어 사용이 부담스럽다면 <code>plan()</code> 함수가 제공하는 <code>workers</code> 옵션을 설정하면 원하는 만큼의 코어를 사용할 수 있습니다. 여기서는 8개의 코어만 사용해 보도록 하겠습니다.</p>
 <pre class="r"><code># 기본 설정 코어 갯수 &amp; 실행 가능한 최대 CPU 코어
@@ -121,7 +121,7 @@ f2 %&lt;-% {
 ## Value: &lt;not collected&gt;
 ## Conditions captured: &lt;none&gt;
 ## Early signaling: FALSE
-## Owner process: 0a05099d-e988-7d64-9a2b-264a0bf864f3
+## Owner process: f9f5cd8d-58bb-fd43-4b6f-b16c379aaf18
 ## Class: &#39;MultisessionFuture&#39;, &#39;ClusterFuture&#39;, &#39;MultiprocessFuture&#39;, &#39;Future&#39;, &#39;environment&#39;</code></pre>
 <pre class="r"><code>f2</code></pre>
 <pre><code>## hi</code></pre>
@@ -197,7 +197,7 @@ data.frame(
     t2 = rnorm(10000),
     t3 = rnorm(10000)
 ) %&gt;% write.csv(., &#39;testFile.csv&#39;)</code></pre>
-<p>  정규분포를 따르는 난수를 생성하는 <code>rnorm()</code>함수를 사용하여 3개의 column과 10000개의 row를 지니고 있는 임의의 데이터프레임을 생성하였고, 이를 csv파일로 저장하였습니다. R 에서 제공하는 다양한 반복 처리 기법들을 사용하여 생성한 csv파일을 각각 500번씩 읽어들이는데 소요된 속도를 <code>system.time()</code> 함수를 사용하여 비교해보도록 하겠습니다.</p>
+<p>  정규분포를 따르는 난수를 생성하는 <code>rnorm()</code> 함수를 사용하여 3개의 column과 10000개의 row를 지니고 있는 임의의 데이터프레임을 생성하였고, 이를 csv파일로 저장하였습니다. R 에서 제공하는 다양한 반복 처리 기법들을 사용하여 생성한 csv파일을 각각 500번씩 읽어들이는데 소요된 속도를 <code>system.time()</code> 함수를 사용하여 비교해보도록 하겠습니다.</p>
 <pre class="r"><code># 테스트 결과 리스트에 저장
 speed_result &lt;- list()
 speed_result &lt;- list(
@@ -262,7 +262,7 @@ speed_result</code></pre>
 <p>  <strong><code>future</code></strong> 패키지를 사용하였음에도 불구하고 예상한것과 달리 속도 개선이 그리 와닿지 않습니다. 다른 기법들과 속도가 비슷하거나 <code>purrr::map()</code> 함수와 비교해보면 되려 속도가 느린 것을 볼 수 있습니다. 여기서 한가지 더 짚고 넘어가야 할 점이라면 <strong><code>future</code></strong> 패키지를 통해 속도개선을 위한다면 다음의 패키지들을 추가적으로 설치하여 사용하는 것을 추천합니다.</p>
 <pre class="r"><code>install.packages(&#39;future.apply&#39;)
 install.packages(&#39;furrr&#39;)</code></pre>
-<p>  <strong><code>future</code></strong> 패키지의 확장 패키지들인 <strong><code>future.apply</code></strong>, <strong><code>furrr</code></strong> 패키지는 병렬 환경에서 각각 <code>apply</code>문과 <code>purrr</code>패키지의 함수를 대체하여 사용할 수 있는 <code>future.apply::future_apply()</code> 또는 <code>furrr::future_map()</code> 등의 함수를 제공하고 있습니다.</p>
+<p>  <strong><code>future</code></strong> 패키지의 확장 패키지들인 <strong><code>future.apply</code></strong> , <strong><code>furrr</code></strong> 패키지는 병렬 환경에서 각각 <code>apply</code> 문과 <code>purrr</code> 패키지의 함수를 대체하여 사용할 수 있는 <code>future.apply::future_apply()</code> 또는 <code>furrr::future_map()</code> 등의 함수를 제공하고 있습니다.</p>
 <pre class="r"><code># future_lapply 속도 측정 
 library(future.apply)
 list(
@@ -435,7 +435,7 @@ modeling_speed_test</code></pre>
 ## $future_apply
 ##  사용자  시스템 elapsed 
 ##    0.47    0.01    1.91</code></pre>
-<p> 50번의 ARIMA모델을 <code>sapply()</code>함수가 274초에 걸쳐 처리한것에 반면 <code>future_apply()</code>함수는 2초가 안되는 시간에 처리한것을 확인할 수 있습니다. 이와 같이 <strong><code>future</code></strong> 패키지를 통해 비동기 및 병렬연산을 적절히 활용한다면 더욱 효율적인 R 프로그래밍을 할 수 있습니다.</p>
+<p> 50번에 걸친 ARIMA모델링을 <code>sapply()</code> 함수가 244.18초 동안 처리한 것에 비해 <code>future_apply()</code> 함수는 단 2초도 안걸리는 시간 안에 처리한 것을 확인할 수 있습니다. 이와 같이 <strong><code>future</code></strong> 패키지를 통한 비동기 및 병렬연산을 적절히 활용한다면 보다 빠르고 효율적인 R 프로그래밍을 진행 할 수 있습니다.</p>
 <hr />
 </div>
 </div>
