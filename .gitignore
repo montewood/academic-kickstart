@@ -1,6 +1,6 @@
 # IDEs
 .idea/
-.Rdata
+
 
 # Hugo
 resources/
@@ -8,3 +8,4 @@ public/
 *.Rproj.user
 *.Rmd
 .Rproj.user
+.Rdata
