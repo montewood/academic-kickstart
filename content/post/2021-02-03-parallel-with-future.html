@@ -121,7 +121,7 @@ f2 %&lt;-% {
 ## Value: &lt;not collected&gt;
 ## Conditions captured: &lt;none&gt;
 ## Early signaling: FALSE
-## Owner process: f9f5cd8d-58bb-fd43-4b6f-b16c379aaf18
+## Owner process: a6dbfbb1-27f4-4047-fa8d-69fd1baba872
 ## Class: &#39;MultisessionFuture&#39;, &#39;ClusterFuture&#39;, &#39;MultiprocessFuture&#39;, &#39;Future&#39;, &#39;environment&#39;</code></pre>
 <pre class="r"><code>f2</code></pre>
 <pre><code>## hi</code></pre>
@@ -286,7 +286,7 @@ list(
 <p> <code>future()</code> 함수의 속도 대비 훨신 빠른 성능을 보인 것을 확인할 수 있습니다.</p>
 </div>
 <div id="모델링-속도-비교" class="section level4">
-<h4>2-1) 모델링 속도 비교</h4>
+<h4>2-2) 모델링 속도 비교</h4>
 <p> 이번에는 실제 모델링에서의 연산속도는 어떠할지 측정해 보도록 하겠습니다. 시계열분석 예제 데이터로 많이 활용되는 <code>AirPassengers</code> 데이터에 난수를 더하여 만든 50개의 시계열 데이터에 각각 ARIMA모형을 구축하고, 각 방법마다 모델링에 걸리는 시간을 측정 및 비교해 보도록 하겠습니다. 이번에도 역시 다른 일반적인 기법들과의 비교를 통해 속도 측정을 진행해 보도록 하죠.</p>
 <pre class="r"><code>library(forecast)
 
